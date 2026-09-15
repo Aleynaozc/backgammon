@@ -28,12 +28,12 @@ export function Checker({
       className={twMerge(
         clsx(
           "relative rounded-full shadow-md flex items-center justify-center transition-all duration-200",
-          "w-10 h-10 sm:w-12 sm:h-12 border-2",
+          "checker-piece w-10 h-10 sm:w-12 sm:h-12 border-2",
           isPlayer1 
-            ? "bg-[#E6D5B8] border-[#D4C3A3] text-stone-800" // Cream/Sand
-            : "bg-[#2A4365] border-[#1A365D] text-white", // Deep Ocean Blue
+            ? "bg-[var(--sand)] border-[var(--coral)] text-[var(--navy)]"
+            : "bg-[var(--ocean)] border-[var(--teal)] text-[var(--navy)]",
           isClickable && "cursor-pointer hover:scale-105",
-          isSelected && "ring-4 ring-yellow-400 ring-opacity-60 scale-105 z-10 shadow-lg",
+          isSelected && "z-10 scale-105 ring-4 ring-[var(--coral)]/70 shadow-lg",
           !isClickable && "cursor-default"
         ),
         className

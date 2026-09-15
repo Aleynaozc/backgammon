@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import { GameState, Player, Move } from '@/types/game';
 import { PointUI } from './PointUI';
 import { Checker } from './Checker';
+import { Die } from './Dice';
 import { getAllLegalMoves, validateMoveRule } from '@/lib/game/engine';
 import { applyMove } from '@/lib/game/moves';
 
@@ -9,17 +11,50 @@ interface BoardProps {
   gameState: GameState;
   onConfirmMoves: (moves: Move[]) => Promise<void>;
   viewerPlayer: Player | 'spectator';
+  hectorPlayer: Player | null;
 }
 
-export function BackgammonBoard({ gameState, onConfirmMoves, viewerPlayer }: BoardProps) {
+export function BackgammonBoard({ gameState, onConfirmMoves, viewerPlayer, hectorPlayer }: BoardProps) {
   const [selectedPoint, setSelectedPoint] = useState<number | 'bar' | null>(null);
   const [pendingMoves, setPendingMoves] = useState<Move[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showHector, setShowHector] = useState(false);
+  const previousGameStateRef = useRef<GameState | null>(null);
+  const hectorTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     setPendingMoves([]);
     setSelectedPoint(null);
   }, [gameState.version]);
+
+  useEffect(() => {
+    const previousGameState = previousGameStateRef.current;
+    previousGameStateRef.current = gameState;
+
+    if (!previousGameState || viewerPlayer === 'spectator' || !hectorPlayer) return;
+
+    const capturedPlayer = hectorPlayer === 'player1' ? 'player2' : 'player1';
+    const wasHectorCapture = gameState.bar[capturedPlayer] > previousGameState.bar[capturedPlayer];
+    if (!wasHectorCapture) return;
+
+    if (hectorTimerRef.current !== null) {
+      window.clearTimeout(hectorTimerRef.current);
+    }
+
+    setShowHector(true);
+    hectorTimerRef.current = window.setTimeout(() => {
+      setShowHector(false);
+      hectorTimerRef.current = null;
+    }, 3000);
+  }, [gameState.version, hectorPlayer, viewerPlayer]);
+
+  useEffect(() => {
+    return () => {
+      if (hectorTimerRef.current !== null) {
+        window.clearTimeout(hectorTimerRef.current);
+      }
+    };
+  }, []);
 
   const previewState = pendingMoves.reduce((state, move) => applyMove(state, move), gameState);
 
@@ -127,11 +162,18 @@ export function BackgammonBoard({ gameState, onConfirmMoves, viewerPlayer }: Boa
   const bottomIndicesRight = [18, 19, 20, 21, 22, 23];
 
   return (
-    <div className="flex w-full items-stretch justify-center gap-3 sm:gap-5">
-      <div className="relative min-w-0 flex-1 max-w-4xl aspect-[4/3] sm:aspect-[3/2] bg-[#5C4033] p-2 sm:p-4 rounded-xl shadow-2xl flex flex-col gap-4 mx-auto select-none overflow-hidden">
+    <div className="board-layout relative flex w-full items-stretch justify-center gap-3 sm:gap-5">
+      <div className="board-surface relative min-w-0 flex-1 max-w-4xl aspect-[4/3] sm:aspect-[3/2] rounded-xl bg-[var(--navy)] p-2 shadow-2xl shadow-[var(--navy)]/50 sm:p-4 flex flex-col gap-4 mx-auto select-none overflow-hidden">
       
       {/* Wood Texture / Frame Inner Bevel */}
-      <div className="absolute inset-0 rounded-xl border-8 sm:border-[16px] border-[#3E2723] pointer-events-none z-0"></div>
+      <div className="pointer-events-none absolute inset-0 z-0 rounded-xl border-8 border-[var(--papaya)] sm:border-[16px]"></div>
+
+      {gameState.dice.length === 2 && (
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-[999] flex -translate-x-1/2 -translate-y-1/2 gap-3 rounded-2xl border-2 border-[var(--coral)] bg-[var(--cream)]/95 p-3 shadow-2xl shadow-[var(--navy)]/50">
+          <Die value={gameState.dice[0]} isUsed={!gameState.remainingMoves.includes(gameState.dice[0])} className="board-die h-12 w-12 sm:h-16 sm:w-16" />
+          <Die value={gameState.dice[1]} isUsed={!gameState.remainingMoves.includes(gameState.dice[1])} className="board-die h-12 w-12 sm:h-16 sm:w-16" />
+        </div>
+      )}
       
       {/* Board Layout */}
       <div className="flex-1 flex flex-col z-10">
@@ -142,7 +184,7 @@ export function BackgammonBoard({ gameState, onConfirmMoves, viewerPlayer }: Boa
           
           {/* BAR */}
           <div 
-            className="w-12 sm:w-16 h-full bg-[#3E2723] mx-2 flex flex-col items-center justify-end pb-2 cursor-pointer shadow-inner"
+            className="mx-2 flex h-full w-12 cursor-pointer flex-col items-center justify-end border-x-2 border-[var(--papaya)] bg-[var(--palm)] pb-2 shadow-inner sm:w-16"
             onClick={() => handleBarClick('player2')}
           >
             {/* Player 2 Bar */}
@@ -156,7 +198,7 @@ export function BackgammonBoard({ gameState, onConfirmMoves, viewerPlayer }: Boa
 
         {/* Middle Hinge Line */}
         <div className="relative z-30 my-1 flex h-12 w-full items-center justify-center opacity-100 sm:h-16">
-          <div className="w-full h-[1px] sm:h-[2px] bg-black/40 shadow-sm" />
+          <div className="h-[2px] w-full bg-[var(--papaya)] shadow-sm sm:h-[3px]" />
         </div>
 
         {/* Bottom Half */}
@@ -165,7 +207,7 @@ export function BackgammonBoard({ gameState, onConfirmMoves, viewerPlayer }: Boa
           
           {/* BAR */}
           <div 
-            className="w-12 sm:w-16 h-full bg-[#3E2723] mx-2 flex flex-col items-center justify-start pt-2 cursor-pointer shadow-inner"
+            className="mx-2 flex h-full w-12 cursor-pointer flex-col items-center justify-start border-x-2 border-[var(--papaya)] bg-[var(--palm)] pt-2 shadow-inner sm:w-16"
             onClick={() => handleBarClick('player1')}
           >
             {/* Player 1 Bar */}
@@ -185,7 +227,7 @@ export function BackgammonBoard({ gameState, onConfirmMoves, viewerPlayer }: Boa
         <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
           <button 
             onClick={handleBearOffClick}
-            className="pointer-events-auto bg-green-500 text-white font-bold py-3 px-6 rounded-full shadow-lg shadow-black/50 animate-pulse text-lg"
+            className="pointer-events-auto rounded-full bg-[var(--coral)] px-6 py-3 text-lg font-bold text-white shadow-lg shadow-black/50"
           >
             BEAR OFF
           </button>
@@ -193,14 +235,14 @@ export function BackgammonBoard({ gameState, onConfirmMoves, viewerPlayer }: Boa
       )}
 
         {pendingMoves.length > 0 && (
-          <div className="absolute bottom-3 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-white/20 bg-stone-950/90 p-2 shadow-xl backdrop-blur-sm">
+          <div className="absolute bottom-3 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--navy)]/95 p-2 shadow-xl backdrop-blur-sm">
             <button
               type="button"
               onClick={() => {
                 setPendingMoves((moves) => moves.slice(0, -1));
                 setSelectedPoint(null);
               }}
-              className="rounded-lg border border-white/15 px-3 py-2 text-xs font-bold text-stone-200 transition-colors hover:bg-white/10"
+              className="rounded-lg border border-[var(--line)] px-3 py-2 text-xs font-bold text-[var(--sand)]"
             >
               Undo
             </button>
@@ -213,7 +255,7 @@ export function BackgammonBoard({ gameState, onConfirmMoves, viewerPlayer }: Boa
                 });
               }}
               disabled={isSubmitting}
-              className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-bold text-emerald-950 transition-colors hover:bg-emerald-400"
+              className="rounded-lg bg-[var(--coral)] px-3 py-2 text-xs font-bold text-white"
             >
               {isSubmitting ? 'Confirming...' : 'Confirm Move'}
             </button>
@@ -221,18 +263,18 @@ export function BackgammonBoard({ gameState, onConfirmMoves, viewerPlayer }: Boa
         )}
       </div>
 
-      <aside className="flex w-16 shrink-0 flex-col justify-between rounded-xl border border-[#8B6B4E] bg-[#3E2723] p-2 shadow-xl sm:w-24 sm:p-3">
-        <div className="text-center text-[10px] font-bold uppercase tracking-widest text-[#E6D5B8] sm:text-xs">Bear off</div>
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex min-h-20 flex-col items-center gap-[-4px] sm:min-h-28">
+      <aside className="bear-off-tray flex w-16 shrink-0 flex-col justify-between rounded-xl border border-[var(--coral)] bg-[var(--coral)]/80 p-2 text-[var(--navy)] shadow-xl sm:w-24 sm:p-3">
+        <div className="text-center text-[10px] font-bold uppercase tracking-widest text-[var(--navy)] sm:text-xs">Bear off</div>
+        <div className="bear-off-pieces flex flex-col items-center gap-2">
+          <div className="bear-off-stack flex min-h-20 flex-col items-center gap-[-4px] sm:min-h-28">
             {Array.from({ length: previewState.borneOff.player2 }).map((_, index) => (
               <div key={`player2-${index}`} className="-mb-3 animate-[checker-land_500ms_ease-out] sm:-mb-4">
                 <Checker player="player2" />
               </div>
             ))}
           </div>
-          <div className="h-px w-full bg-white/15" />
-          <div className="flex min-h-20 flex-col items-center gap-[-4px] sm:min-h-28">
+          <div className="bear-off-divider h-px w-full bg-[var(--navy)]/30" />
+          <div className="bear-off-stack flex min-h-20 flex-col items-center gap-[-4px] sm:min-h-28">
             {Array.from({ length: previewState.borneOff.player1 }).map((_, index) => (
               <div key={`player1-${index}`} className="-mb-3 animate-[checker-land_500ms_ease-out] sm:-mb-4">
                 <Checker player="player1" />
@@ -240,11 +282,23 @@ export function BackgammonBoard({ gameState, onConfirmMoves, viewerPlayer }: Boa
             ))}
           </div>
         </div>
-        <div className="space-y-1 text-center text-[10px] text-stone-300 sm:text-xs">
+        <div className="bear-off-counts space-y-1 text-center text-[10px] text-[var(--navy)]/80 sm:text-xs">
           <div>Blue {previewState.borneOff.player2}/15</div>
           <div>White {previewState.borneOff.player1}/15</div>
         </div>
       </aside>
+
+      {showHector && (
+        <div className="pointer-events-none fixed inset-0 z-[2000] flex items-center justify-center bg-[var(--navy)]/70 p-6">
+          <Image
+            src="/hector.jpg"
+            alt="Hector has captured a checker"
+            width={460}
+            height={460}
+            className="hector-capture max-h-[78vh] w-[min(82vw,460px)] object-cover shadow-2xl"
+          />
+        </div>
+      )}
 
     </div>
   );

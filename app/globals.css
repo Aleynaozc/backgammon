@@ -3,6 +3,19 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --ink: #08283a;
+  --navy: #08283a;
+  --ocean: #08b8b0;
+  --teal: #63e6e2;
+  --coral: #ff7657;
+  --papaya: #ffb45c;
+  --sand: #f8e7c8;
+  --cream: #f8e7c8;
+  --brown: #3e9b70;
+  --palm: #3e9b70;
+  --line: rgba(248, 231, 200, 0.28);
+  --font-sans: 'DM Mono', monospace;
+  --font-serif: 'Playfair Display', serif;
 }
 
 @theme inline {
@@ -25,6 +38,104 @@ body {
   font-family: var(--font-geist-sans), sans-serif;
 }
 
+.game-shell {
+  background:
+    radial-gradient(circle at 12% 12%, rgba(99, 230, 226, 0.12), transparent 28%),
+    radial-gradient(circle at 88% 82%, rgba(255, 118, 87, 0.1), transparent 26%),
+    linear-gradient(135deg, #174a5b 0%, #0d3549 48%, var(--navy) 100%);
+}
+
+.surf-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  color: var(--sand);
+}
+
+.surf-loader-waves {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.3rem;
+  height: 2.5rem;
+}
+
+.surf-loader-waves span {
+  display: block;
+  width: 0.35rem;
+  height: 1rem;
+  border-radius: 999px;
+  background: var(--teal);
+  animation: surf-wave 1s ease-in-out infinite;
+}
+
+.surf-loader-waves span:nth-child(2) {
+  height: 1.8rem;
+  background: var(--ocean);
+  animation-delay: 0.15s;
+}
+
+.surf-loader-waves span:nth-child(3) {
+  height: 1.3rem;
+  background: var(--coral);
+  animation-delay: 0.3s;
+}
+
+.surf-loader-label {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+}
+
+@keyframes surf-wave {
+  0%, 100% {
+    transform: scaleY(0.65);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.hero-background {
+  background-position: 46% 45%;
+}
+
+.hero-coordinate {
+  position: absolute;
+  right: clamp(22px, 5vw, 76px);
+  bottom: 90px;
+  z-index: 10;
+  color: rgba(247, 241, 231, 0.7);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  line-height: 1.8;
+  text-align: right;
+}
+
+.hero-coordinate span {
+  color: var(--coral);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+}
+
+.eyebrow {
+  margin: 0 0 21px;
+  color: var(--sand);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0.19em;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.eyebrow b {
+  color: var(--coral);
+  font-weight: 400;
+  margin: 0 5px;
+}
+
 @keyframes checker-land {
   0% {
     opacity: 0;
@@ -39,3 +150,184 @@ body {
     transform: translateY(0) scale(1) rotate(0);
   }
 }
+
+@keyframes hector-capture {
+  0% {
+    opacity: 0;
+    transform: scale(0.68);
+  }
+  18% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  32%, 76% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+}
+
+.hector-capture {
+  animation: hector-capture 4s ease-in-out both;
+}
+
+@media (max-width: 640px) and (orientation: portrait) {
+  .game-room {
+    gap: 0.25rem;
+    padding: 0.35rem;
+  }
+
+  .board-layout {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .board-surface {
+    width: 100%;
+    max-width: none;
+    flex: none;
+    aspect-ratio: 4 / 3;
+    gap: 0.35rem;
+    padding: 0.35rem;
+  }
+
+  .player-panel {
+    gap: 0.3rem;
+    padding: 0.3rem 0.4rem;
+  }
+
+  .checker-piece {
+    width: 1.4rem !important;
+    height: 1.4rem !important;
+    border-width: 1px;
+  }
+
+  .checker-stack-item {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .board-die {
+    width: 1.9rem !important;
+    height: 1.9rem !important;
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+  }
+
+  .board-surface > .border-8 {
+    border-width: 5px;
+  }
+
+  .bear-off-tray {
+    width: 100%;
+    height: 3.25rem;
+    flex-direction: row;
+    gap: 0.5rem;
+    padding: 0.35rem 0.6rem;
+  }
+
+  .bear-off-pieces {
+    min-width: 0;
+    flex: 1;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  .bear-off-stack {
+    min-height: 0;
+    flex-direction: row;
+  }
+
+  .bear-off-stack > div {
+    margin-bottom: 0;
+    margin-top: 0;
+  }
+
+  .bear-off-divider {
+    height: 100%;
+    width: 1px;
+  }
+
+  .bear-off-counts {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  .game-room {
+    gap: 0.25rem;
+    padding: 0.35rem;
+  }
+
+  .board-layout {
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .board-surface {
+    flex: none;
+    width: min(78vw, calc((100dvh - 4.5rem) * 1.5));
+    height: min(52dvh, calc(100dvh - 4.5rem));
+    aspect-ratio: 3 / 2;
+    gap: 0.35rem;
+    padding: 0.35rem;
+  }
+
+  .player-panel {
+    gap: 0.3rem;
+    padding: 0.25rem 0.4rem;
+  }
+
+  .checker-piece {
+    width: 1.4rem !important;
+    height: 1.4rem !important;
+    border-width: 1px;
+  }
+
+  .checker-stack-item {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .board-die {
+    width: 1.9rem !important;
+    height: 1.9rem !important;
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+  }
+
+  .bear-off-tray {
+    width: 3.75rem;
+    padding: 0.35rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .hero-background {
+    background-position: 58% center;
+  }
+
+  .hero-coordinate {
+    font-size: 9px;
+  }
+
+  .eyebrow {
+    font-size: 8px;
+    letter-spacing: 0.13em;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .hero-background {
+    background-position: center 52%;
+  }
+
+  .hero-coordinate {
+    bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
+

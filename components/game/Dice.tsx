@@ -24,7 +24,7 @@ export function Die({ value, isUsed, className }: DiceProps) {
     <div
       className={twMerge(
         clsx(
-          "w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl shadow-md border border-stone-200 p-1.5 sm:p-2",
+          "die h-10 w-10 rounded-xl border border-[var(--sand)] bg-[var(--papaya)] p-1.5 shadow-md sm:h-12 sm:w-12 sm:p-2",
           "grid grid-cols-3 grid-rows-3 gap-0.5",
           "transition-opacity duration-300",
           isUsed && "opacity-40"
@@ -33,7 +33,7 @@ export function Die({ value, isUsed, className }: DiceProps) {
       )}
     >
       {dotPositions[value].map((pos, idx) => (
-        <div key={idx} className={clsx("w-full h-full bg-stone-800 rounded-full", pos)} />
+        <div key={idx} className={clsx("h-full w-full rounded-full bg-[var(--navy)]", pos)} />
       ))}
     </div>
   );

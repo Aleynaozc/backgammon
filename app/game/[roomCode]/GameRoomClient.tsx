@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { GameState, Player, Move } from '@/types/game';
 import { BackgammonBoard } from '@/components/game/BackgammonBoard';
 import { PlayerPanel } from '@/components/game/PlayerPanel';
-import { Die } from '@/components/game/Dice';
-import { joinGame, getGameSnapshot, rollDiceAction, movePieceAction } from '@/app/actions/game';
+import { joinGame, getGameRoomStatus, getGameSnapshot, rollDiceAction, movePieceAction } from '@/app/actions/game';
 import { createClient } from '@/lib/supabase/client';
 
 interface GameRoomClientProps {
@@ -13,11 +14,14 @@ interface GameRoomClientProps {
 }
 
 export function GameRoomClient({ roomCode }: GameRoomClientProps) {
+  const router = useRouter();
   const [nickname, setNickname] = useState<string>('');
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [joined, setJoined] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isExistingRoom, setIsExistingRoom] = useState(false);
+  const [isJoiningAsOtherPlayer, setIsJoiningAsOtherPlayer] = useState(false);
 
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [viewerPlayer, setViewerPlayer] = useState<Player | 'spectator'>('spectator');
@@ -38,7 +42,16 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
       setNickname(storedName);
       handleJoin(storedName, storedId);
     } else {
-      setLoading(false);
+      void getGameRoomStatus(roomCode).then((status) => {
+        if (status.error) {
+          setError(status.error);
+        } else if (status.isFull) {
+          setError('This game room is full.');
+        } else {
+          setIsExistingRoom(Boolean(status.exists));
+        }
+        setLoading(false);
+      });
     }
   }, []);
 
@@ -236,34 +249,104 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
     }
   };
 
+  const exitGame = () => {
+    localStorage.removeItem('bg_playerId');
+    localStorage.removeItem('bg_nickname');
+    router.push('/');
+  };
+
   if (loading) {
-    return <div className="text-xl animate-pulse">Connecting...</div>;
+    return (
+      <div className="surf-loader" role="status" aria-live="polite" aria-label="Connecting">
+        <div className="surf-loader-waves" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+        <span className="surf-loader-label">CONNECTING</span>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="text-red-400 text-xl">{error}</div>;
+    return <div className="text-xl text-[var(--coral)]">{error}</div>;
   }
 
   if (!joined) {
     return (
-      <div className="bg-stone-800 p-8 rounded-2xl shadow-xl border border-stone-700 max-w-sm w-full space-y-6">
-        <h2 className="text-2xl font-bold text-center text-[#E6D5B8]">JOIN GAME</h2>
-        <div className="space-y-4">
-          <input
-            type="text"
-            placeholder="Your name"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            className="w-full bg-stone-700 border border-stone-600 rounded-xl px-4 py-3 text-lg focus:ring-2 focus:ring-[#E6D5B8] focus:outline-none"
-            maxLength={12}
+      <div className="relative w-full max-w-sm">
+        {isExistingRoom && !isJoiningAsOtherPlayer && (
+          <Image
+            src="/hec.png"
+            alt="Hector"
+            width={100}
+            height={100}
+            priority
+            className="absolute -right-4 -top-26 z-10 object-contain"
           />
-          <button
-            onClick={() => handleJoin(nickname)}
-            disabled={!nickname.trim()}
-            className="w-full bg-[#E6D5B8] hover:bg-[#D4C3A3] text-stone-900 font-bold py-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            JOIN
-          </button>
+        )}
+        <div className="space-y-6 rounded-2xl border border-[var(--ocean)]/30 bg-[var(--cream)] p-8 text-[var(--navy)] shadow-2xl shadow-[var(--ocean)]/25">
+        {isExistingRoom ? (
+          <>
+            {!isJoiningAsOtherPlayer ? (
+              <>
+                <h2 className="pr-6 text-center text-2xl font-bold uppercase text-[var(--navy)]">HECTOR, IS THAT YOU?</h2>
+                <button
+                  onClick={() => handleJoin('Hector')}
+                  className="w-full rounded-xl bg-[var(--coral)] py-3 font-bold uppercase text-white"
+                >
+                  YES
+                </button>
+                <button
+                  onClick={() => setIsJoiningAsOtherPlayer(true)}
+                  className="w-full text-sm font-semibold uppercase tracking-wide text-[var(--ocean)]"
+                >
+                  NO, I&apos;M THE OTHER PLAYER
+                </button>
+              </>
+            ) : (
+              <>
+                <h2 className="text-center text-2xl font-bold uppercase text-[var(--navy)]">JOIN GAME</h2>
+                <input
+                  type="text"
+                  placeholder="Your name"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  className="w-full rounded-xl border border-[var(--ocean)]/40 bg-white/70 px-4 py-3 text-lg text-[var(--navy)] placeholder:text-[var(--ocean)]/60 focus:outline-none focus:ring-2 focus:ring-[var(--teal)]"
+                  maxLength={12}
+                />
+                <button
+                  onClick={() => handleJoin(nickname)}
+                  disabled={!nickname.trim()}
+                  className="w-full rounded-xl bg-[var(--coral)] py-3 font-bold uppercase text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  JOIN
+                </button>
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            <h2 className="text-center text-2xl font-bold text-[var(--navy)]">JOIN GAME</h2>
+            <div className="space-y-4">
+              <input
+                type="text"
+                placeholder="Your name"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                className="w-full rounded-xl border border-[var(--ocean)]/40 bg-white/70 px-4 py-3 text-lg text-[var(--navy)] placeholder:text-[var(--ocean)]/60 focus:outline-none focus:ring-2 focus:ring-[var(--teal)]"
+                maxLength={12}
+              />
+              <button
+                onClick={() => handleJoin(nickname)}
+                disabled={!nickname.trim()}
+                className="w-full rounded-xl bg-[var(--coral)] py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                JOIN
+              </button>
+            </div>
+          </>
+        )}
         </div>
       </div>
     );
@@ -271,8 +354,15 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
 
   if (!gameState) return null;
 
+  const hectorPlayer: Player | null =
+    playersInfo.player1.trim().toLowerCase() === 'hector'
+      ? 'player1'
+      : playersInfo.player2.trim().toLowerCase() === 'hector'
+        ? 'player2'
+        : null;
+
   return (
-    <div className="flex h-full w-full max-w-[1400px] flex-col gap-2 p-2 sm:gap-3 sm:p-4">
+    <div className="game-room flex h-full w-full max-w-[1400px] flex-col gap-2 p-1 sm:gap-3 sm:p-4">
       
       {/* Top Bar / Opponent */}
       <div className="flex items-center justify-between">
@@ -289,9 +379,15 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
         
         {/* Actions */}
         <div className="flex gap-2">
-          <button onClick={copyLink} className="bg-stone-800 p-2 rounded-lg text-sm border border-stone-700 hover:bg-stone-700">
-            Invite
-          </button>
+          {playersInfo.player2 !== 'Waiting...' ? (
+            <button onClick={exitGame} className="cursor-pointer rounded-lg border border-[var(--coral)]/50 bg-[var(--cream)] p-2 text-sm font-semibold text-[var(--navy)]">
+              Exit Game
+            </button>
+          ) : (
+            <button onClick={copyLink} className="cursor-pointer rounded-lg border border-[var(--ocean)]/40 bg-[var(--cream)] p-2 text-sm text-[var(--navy)]">
+              Invite
+            </button>
+          )}
         </div>
       </div>
 
@@ -300,13 +396,8 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
           gameState={gameState}
           onConfirmMoves={handleConfirmMoves}
           viewerPlayer={viewerPlayer}
+          hectorPlayer={hectorPlayer}
         />
-        {gameState.dice.length === 2 && (
-          <div className="pointer-events-none absolute left-1/2 top-1/2 z-[999] flex -translate-x-1/2 -translate-y-1/2 gap-3 rounded-2xl border-2 border-yellow-300 bg-stone-950/95 p-3 shadow-2xl shadow-black/70">
-            <Die value={gameState.dice[0]} isUsed={!gameState.remainingMoves.includes(gameState.dice[0])} className="h-12 w-12 sm:h-16 sm:w-16" />
-            <Die value={gameState.dice[1]} isUsed={!gameState.remainingMoves.includes(gameState.dice[1])} className="h-12 w-12 sm:h-16 sm:w-16" />
-          </div>
-        )}
       </div>
 
       {/* Bottom Bar / You */}
@@ -324,7 +415,7 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
         
         {/* Game Status */}
         {gameState.status === 'FINISHED' && (
-          <div className="text-center font-bold text-yellow-400 text-xl animate-bounce">
+          <div className="text-center text-xl font-bold uppercase text-[var(--coral)]">
             GAME OVER! WINNER: {gameState.winner === 'player1' ? playersInfo.player1 : playersInfo.player2}
           </div>
         )}

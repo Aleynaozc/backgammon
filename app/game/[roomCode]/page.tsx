@@ -9,7 +9,7 @@ export default async function GamePage(
   const roomCode = params.roomCode.toUpperCase();
 
   return (
-    <main className="flex h-screen w-screen overflow-hidden bg-stone-900 text-stone-100 items-center justify-center">
+    <main className="game-shell flex h-screen w-screen items-center justify-center overflow-hidden text-[var(--navy)]">
       <GameRoomClient roomCode={roomCode} />
     </main>
   );

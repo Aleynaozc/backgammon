@@ -110,6 +110,17 @@ export async function joinGame(roomCode: string, playerName: string, playerId: s
   // Room is full
   return { error: 'The game room is full.' };
 }
+export async function getGameRoomStatus(roomCode: string) {
+  const supabase = await createAdminClient();
+  const { data, error } = await supabase
+    .from('games')
+    .select('player2_id')
+    .eq('room_code', roomCode)
+    .maybeSingle();
+
+  if (error) return { error: 'Could not check the game room.' };
+  return { exists: Boolean(data), isFull: Boolean(data?.player2_id) };
+}
 
 export async function getGameSnapshot(roomCode: string) {
   const supabase = await createAdminClient();

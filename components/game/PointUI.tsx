@@ -23,7 +23,7 @@ export function PointUI({
   selectedChecker
 }: PointUIProps) {
   // Colors for the points
-  const colorClass = isEven ? 'bg-[#967C62]' : 'bg-[#D1BFA5]'; // darker wood, lighter wood
+  const colorClass = isEven ? 'bg-[var(--coral)]' : 'bg-[var(--papaya)]';
   
   // Triangle shape
   const clipPath = isTop 
@@ -46,9 +46,9 @@ export function PointUI({
       {/* The Triangle */}
       <div 
         className={clsx(
-          "absolute w-[80%] h-full opacity-80 transition-all duration-200",
+          "absolute w-[80%] h-full opacity-90",
           colorClass,
-          isHighlighted && "ring-4 ring-yellow-400 opacity-100 z-10"
+          isHighlighted && "z-10 opacity-100 ring-4 ring-[var(--coral)]"
         )}
         style={{ clipPath }}
       />
@@ -56,7 +56,7 @@ export function PointUI({
       {/* Highlight Overlay if valid move */}
       {isHighlighted && (
         <div 
-          className="absolute w-[80%] h-full bg-yellow-400/30 z-10"
+          className="absolute z-10 h-full w-[80%] bg-[var(--teal)]/45"
           style={{ clipPath }}
         />
       )}
@@ -67,14 +67,14 @@ export function PointUI({
         isTop ? "top-0" : "bottom-0"
       )}>
         {checkers.map((idx) => {
-          const isTopChecker = idx === 0;
+          const isTopChecker = isTop ? idx === checkers.length - 1 : idx === 0;
           const isSelected = selectedChecker && isTopChecker;
           
           return (
             <div 
               key={idx} 
               className={clsx(
-                "relative transition-transform duration-300",
+                "checker-stack-item relative transition-transform duration-300",
                 isTop ? "-mt-1 first:mt-0" : "-mb-1 first:mb-0" // overlapping slightly
               )}
             >

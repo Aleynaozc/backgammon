@@ -26,12 +26,10 @@ export function PlayerPanel({
   const hasRolled = isTurn && gameState.dice.length > 0;
   const canRoll = isTurn && !hasRolled && isViewer;
 
-  const borneOffCount = gameState.borneOff[player];
-
   return (
     <div className={clsx(
-      "flex flex-col sm:flex-row items-center gap-3 p-3 rounded-lg transition-all duration-300 w-full",
-      isTurn ? "bg-white/10 shadow-md ring-1 ring-white/20" : "bg-transparent opacity-80"
+      "player-panel flex w-full flex-col items-center gap-3 rounded-lg p-3 sm:flex-row",
+      isTurn ? "bg-[var(--teal)]/20 shadow-md ring-1 ring-[var(--teal)]" : "bg-white/35 opacity-80"
     )}>
       
       {/* Player Info */}
@@ -40,22 +38,17 @@ export function PlayerPanel({
           {/* Color Indicator */}
           <div className={clsx(
             "w-4 h-4 rounded-full border shadow-sm shrink-0",
-            player === 'player1' ? "bg-[#E6D5B8] border-[#D4C3A3]" : "bg-[#2A4365] border-[#1A365D]"
+            player === 'player1' ? "border-[var(--sand)] bg-[var(--cream)]" : "border-[var(--teal)] bg-[var(--ocean)]"
           )} />
-          <span className="font-bold text-white truncate text-sm sm:text-base">
+          <span className="truncate text-sm font-bold uppercase text-[var(--navy)] sm:text-base">
             {playerName} {isViewer && "(You)"}
           </span>
-        </div>
-        <div className="flex items-center gap-1.5 mt-1 text-xs sm:text-sm">
-          <div className={clsx(
-            "w-2 h-2 rounded-full",
-            isOnline ? "bg-green-400" : "bg-stone-500"
-          )} />
-            <span className={isOnline ? "text-green-300" : "text-stone-400"}>
-            {isOnline ? "Online" : "Waiting for connection"}
-          </span>
-          <span className="text-white/50 ml-auto">
-            Collected: {borneOffCount}/15
+          <span className="flex shrink-0 items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--ocean)] sm:text-xs">
+            <span className={clsx(
+              "h-2 w-2 rounded-full",
+              isOnline ? "bg-[var(--palm)]" : "bg-[var(--brown)]"
+            )} />
+            {isOnline ? "Online" : "Waiting"}
           </span>
         </div>
       </div>
@@ -66,7 +59,7 @@ export function PlayerPanel({
             {canRoll ? (
               <button
                 onClick={onRollDice}
-                className="bg-yellow-500 hover:bg-yellow-400 text-yellow-950 font-bold py-2 px-4 rounded-lg shadow-md active:scale-95 transition-all text-sm sm:text-base"
+                className="rounded-lg bg-[var(--coral)] px-4 py-2 text-sm font-bold text-white shadow-md sm:text-base"
               >
                 ROLL DICE
               </button>
@@ -80,7 +73,7 @@ export function PlayerPanel({
                 )}
               </div>
             ) : (
-              <div className="text-sm text-white/50 italic animate-pulse">Rolling...</div>
+              <div className="text-sm italic text-[var(--brown)]/70">Rolling...</div>
             )}
           </>
         )}
