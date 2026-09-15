@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
 import { GameState, Player, Move } from '@/types/game';
 import { PointUI } from './PointUI';
 import { Checker } from './Checker';
@@ -290,11 +289,12 @@ export function BackgammonBoard({ gameState, onConfirmMoves, viewerPlayer, hecto
 
       {showHector && (
         <div className="pointer-events-none fixed inset-0 z-[2000] flex items-center justify-center bg-[var(--navy)]/70 p-6">
-          <Image
-            src="/hector.jpg"
-            alt="Hector has captured a checker"
-            width={460}
-            height={460}
+          <video
+            src="/hector.mp4"
+            aria-label="Hector has captured a checker"
+            autoPlay
+            loop={false}
+            playsInline
             className="hector-capture max-h-[78vh] w-[min(82vw,460px)] object-cover shadow-2xl"
           />
         </div>
