@@ -1,4 +1,4 @@
-import { GameState, Player, Move } from '@/types/game';
+import { GameState, Move } from '@/types/game';
 import { getLegalMovesForPiece, applyMove } from './moves';
 
 // Get all immediate legal moves for the current player
@@ -33,9 +33,7 @@ export function getAllLegalMoves(state: GameState): Move[] {
   return moves;
 }
 
-// Check if a move is allowed according to full backgammon rules (must play max dice)
-// This is a simplified version. A full tree search is required to strictly enforce
-// "must play both" and "must play largest".
+// Check if a move is allowed according to backgammon's maximum-play rules.
 export function validateMoveRule(state: GameState, move: Move): boolean {
   const allImmediateMoves = getAllLegalMoves(state);
   
@@ -45,45 +43,39 @@ export function validateMoveRule(state: GameState, move: Move): boolean {
   );
   if (!isImmediateLegal) return false;
 
+  const maxAchievableDepth = getMaxPlayableMoveCount(state);
+  const moveDepth = 1 + getMaxPlayableMoveCount(applyMove(state, move));
+
+  if (moveDepth < maxAchievableDepth) {
+    return false;
+  }
+
   // Rule: If you can only play one die, but both are available, 
   // you must play the higher one if possible.
-  // We can do a deep search here. For MVP, we'll do a simple check:
-  if (state.remainingMoves.length === 2 && state.remainingMoves[0] !== state.remainingMoves[1]) {
-    // Determine max depth achievable with each die as the first move
-    const maxDepthMove = (st: GameState, currentDepth: number): number => {
-      const nextMoves = getAllLegalMoves(st);
-      if (nextMoves.length === 0) return currentDepth;
-      let maxD = currentDepth;
-      for (const m of nextMoves) {
-        maxD = Math.max(maxD, maxDepthMove(applyMove(st, m), currentDepth + 1));
-      }
-      return maxD;
-    };
-
-    const maxDepths = allImmediateMoves.map(m => {
-      return { move: m, depth: maxDepthMove(applyMove(state, m), 1) };
-    });
-
-    const maxAchievableDepth = Math.max(...maxDepths.map(d => d.depth));
-
-    // If we can play both dice (depth 2), any move that leads to depth 2 is valid.
-    if (maxAchievableDepth === 2) {
-      const moveDepth = maxDepths.find(
-        d => d.move.from === move.from && d.move.to === move.to && d.move.dieValue === move.dieValue
-      )?.depth || 0;
-      if (moveDepth < 2) return false; // Must pick a move sequence that allows playing both
-    } else if (maxAchievableDepth === 1) {
-      // Can only play ONE die. Must play the larger die if possible.
-      const higherDie = Math.max(...state.remainingMoves);
-      // Are there any legal moves with the higher die?
-      const canPlayHigher = allImmediateMoves.some(m => m.dieValue === higherDie);
-      if (canPlayHigher && move.dieValue !== higherDie) {
-        return false; // Must play higher die
-      }
+  if (
+    maxAchievableDepth === 1 &&
+    state.remainingMoves.length === 2 &&
+    state.remainingMoves[0] !== state.remainingMoves[1]
+  ) {
+    const higherDie = Math.max(...state.remainingMoves);
+    const canPlayHigher = allImmediateMoves.some(m => m.dieValue === higherDie);
+    if (canPlayHigher && move.dieValue !== higherDie) {
+      return false;
     }
   }
 
   return true;
+}
+
+export function getMaxPlayableMoveCount(state: GameState): number {
+  if (state.status === 'FINISHED' || state.remainingMoves.length === 0) return 0;
+
+  const moves = getAllLegalMoves(state);
+  if (moves.length === 0) return 0;
+
+  return Math.max(
+    ...moves.map((move) => 1 + getMaxPlayableMoveCount(applyMove(state, move)))
+  );
 }
 
 export function endTurn(state: GameState): GameState {
@@ -97,12 +89,12 @@ export function endTurn(state: GameState): GameState {
 
 // Automatically passes the turn if the current player has no legal moves left
 export function checkTurnEnd(state: GameState): GameState {
-  if (state.status === 'FINISHED') return state;
+  if (state.status !== 'PLAYING' || state.dice.length === 0) return state;
   if (state.remainingMoves.length === 0) return endTurn(state);
   
   const moves = getAllLegalMoves(state);
   if (moves.length === 0) {
-    return endTurn(state);
+    return endTurn({ ...state, lastPass: { player: state.currentPlayer, turnNumber: state.turnNumber } });
   }
   return state;
 }

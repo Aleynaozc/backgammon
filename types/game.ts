@@ -22,10 +22,18 @@ export interface GameState {
   winner: Player | null;
   turnNumber: number;
   version: number;
+  lastPass?: { player: Player; turnNumber: number };
+  pendingPreview?: PendingPreview | null;
 }
 
 export interface Move {
   from: number | 'bar';
   to: number | 'borneOff';
   dieValue: number;
+}
+
+export interface PendingPreview {
+  player: Player;
+  moves: Move[];
+  updatedAt: number;
 }

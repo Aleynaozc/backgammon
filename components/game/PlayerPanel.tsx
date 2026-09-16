@@ -11,6 +11,7 @@ interface PlayerPanelProps {
   isViewer: boolean;
   onRollDice?: () => void;
   showActions?: boolean;
+  showDice?: boolean;
 }
 
 export function PlayerPanel({
@@ -21,15 +22,17 @@ export function PlayerPanel({
   isViewer,
   onRollDice,
   showActions = true,
+  showDice = true,
 }: PlayerPanelProps) {
   const isTurn = gameState.currentPlayer === player;
   const hasRolled = isTurn && gameState.dice.length > 0;
   const canRoll = isTurn && !hasRolled && isViewer;
+  const shouldShowActions = showActions && isTurn && (canRoll || (!hasRolled && showDice) || (hasRolled && showDice));
 
   return (
     <div className={clsx(
       "player-panel flex w-full flex-col items-center gap-3 rounded-lg p-3 sm:flex-row",
-      isTurn ? "bg-[var(--teal)]/20 shadow-md ring-1 ring-[var(--teal)]" : "bg-white/35 opacity-80"
+   
     )}>
       
       {/* Player Info */}
@@ -37,45 +40,34 @@ export function PlayerPanel({
         <div className="flex items-center gap-2">
           {/* Color Indicator */}
           <div className={clsx(
-            "w-4 h-4 rounded-full border shadow-sm shrink-0",
-            player === 'player1' ? "border-[var(--sand)] bg-[var(--cream)]" : "border-[var(--teal)] bg-[var(--ocean)]"
+            "w-4 h-4 rounded-full border shadow-sm shrink-0 border-[var(--teal)] bg-[var(--ocean)]"
           )} />
-          <span className="truncate text-sm font-bold uppercase text-[var(--navy)] sm:text-base">
+          <span className="truncate text-sm font-bold uppercase text-white sm:text-base">
             {playerName} {isViewer && "(You)"}
           </span>
-          <span className="flex shrink-0 items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--ocean)] sm:text-xs">
-            <span className={clsx(
-              "h-2 w-2 rounded-full",
-              isOnline ? "bg-[var(--palm)]" : "bg-[var(--brown)]"
-            )} />
-            {isOnline ? "Online" : "Waiting"}
-          </span>
+         
         </div>
       </div>
 
-      {showActions && <div className="flex items-center gap-2 shrink-0">
-        {isTurn && (
-          <>
-            {canRoll ? (
-              <button
-                onClick={onRollDice}
-                className="rounded-lg bg-[var(--coral)] px-4 py-2 text-sm font-bold text-white shadow-md sm:text-base"
-              >
-                ROLL DICE
-              </button>
-            ) : hasRolled ? (
-              <div className="flex gap-1.5 sm:gap-2">
-                {gameState.dice.length === 2 && (
-                  <>
-                    <Die value={gameState.dice[0]} isUsed={!gameState.remainingMoves.includes(gameState.dice[0])} />
-                    <Die value={gameState.dice[1]} isUsed={!gameState.remainingMoves.includes(gameState.dice[1])} />
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className="text-sm italic text-[var(--brown)]/70">Rolling...</div>
+      {shouldShowActions && <div className="flex items-center gap-2 shrink-0">
+        {canRoll ? (
+          <button
+            onClick={onRollDice}
+            className="rounded-lg bg-[var(--coral)] px-4 py-2 text-sm font-bold text-white shadow-md sm:text-base"
+          >
+            ROLL DICE
+          </button>
+        ) : hasRolled && showDice ? (
+          <div className="flex gap-1.5 sm:gap-2">
+            {gameState.dice.length === 2 && (
+              <>
+                <Die value={gameState.dice[0]} isUsed={!gameState.remainingMoves.includes(gameState.dice[0])} />
+                <Die value={gameState.dice[1]} isUsed={!gameState.remainingMoves.includes(gameState.dice[1])} />
+              </>
             )}
-          </>
+          </div>
+        ) : (
+          <div className="text-sm italic text-[var(--brown)]/70">Rolling...</div>
         )}
       </div>}
     </div>

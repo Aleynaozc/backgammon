@@ -39,6 +39,7 @@ body {
 }
 
 .game-shell {
+  height: 100dvh;
   background:
     radial-gradient(circle at 12% 12%, rgba(99, 230, 226, 0.12), transparent 28%),
     radial-gradient(circle at 88% 82%, rgba(255, 118, 87, 0.1), transparent 26%),
@@ -185,6 +186,11 @@ body {
     gap: 0.35rem;
   }
 
+  .board-play-area {
+    width: 100%;
+    gap: 0.3rem;
+  }
+
   .board-surface {
     width: 100%;
     max-width: none;
@@ -192,6 +198,18 @@ body {
     aspect-ratio: 4 / 3;
     gap: 0.35rem;
     padding: 0.35rem;
+  }
+
+  .move-controls {
+    width: 100%;
+    gap: 0.35rem;
+    padding: 0.3rem;
+  }
+
+  .move-controls button {
+    flex: 1;
+    min-height: 2rem;
+    padding: 0.45rem 0.55rem;
   }
 
   .player-panel {
@@ -223,7 +241,7 @@ body {
 
   .bear-off-tray {
     width: 100%;
-    height: 3.25rem;
+    height: 3.6rem;
     flex-direction: row;
     gap: 0.5rem;
     padding: 0.35rem 0.6rem;
@@ -234,12 +252,28 @@ body {
     flex: 1;
     flex-direction: row;
     justify-content: center;
-    gap: 0.75rem;
+    gap: 0.45rem;
+    overflow: hidden;
   }
 
   .bear-off-stack {
+    display: grid;
+    flex: 1;
+    min-width: 0;
     min-height: 0;
-    flex-direction: row;
+    grid-auto-columns: minmax(3px, 0.34rem);
+    grid-auto-flow: column;
+    align-items: center;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .bear-off-stack-player2 {
+    justify-content: end;
+  }
+
+  .bear-off-stack-player1 {
+    justify-content: start;
   }
 
   .bear-off-stack > div {
@@ -247,13 +281,15 @@ body {
     margin-top: 0;
   }
 
-  .bear-off-divider {
-    height: 100%;
-    width: 1px;
+  .bear-off-piece {
+    width: 100% !important;
+    height: 2.15rem !important;
+    border-radius: 999px;
   }
 
-  .bear-off-counts {
-    white-space: nowrap;
+  .bear-off-divider {
+    height: 100%;
+    width: 2px;
   }
 }
 
@@ -268,6 +304,11 @@ body {
     gap: 0.5rem;
   }
 
+  .board-play-area {
+    flex: none;
+    gap: 0.25rem;
+  }
+
   .board-surface {
     flex: none;
     width: min(78vw, calc((100dvh - 4.5rem) * 1.5));
@@ -275,6 +316,16 @@ body {
     aspect-ratio: 3 / 2;
     gap: 0.35rem;
     padding: 0.35rem;
+  }
+
+  .move-controls {
+    gap: 0.35rem;
+    padding: 0.25rem;
+  }
+
+  .move-controls button {
+    min-height: 1.85rem;
+    padding: 0.35rem 0.7rem;
   }
 
   .player-panel {
@@ -331,3 +382,95 @@ body {
   }
 }
 
+
+/* Each point owns one bounded hit target; decorative checkers never intercept taps. */
+.point-touch-area {
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.point-touch-area > :not(.point-hitbox),
+.bar-hitbox > * {
+  pointer-events: none;
+}
+
+.point-hitbox:not(:disabled),
+.bar-hitbox:not(:disabled) {
+  cursor: pointer;
+}
+
+.point-touch-area .checker-stack-item {
+  max-width: calc(100% - 4px);
+}
+
+.point-touch-area .checker-piece {
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 1;
+  height: auto !important;
+}
+
+.game-room {
+  touch-action: manipulation;
+}
+
+.board-layout {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Contain overscroll at the document scroller to suppress pull-to-refresh. */
+html:has(.game-shell),
+body:has(.game-shell),
+.game-shell {
+  overscroll-behavior-y: none;
+}
+
+@media (pointer: coarse) {
+  .board-move-controls button,
+  .move-controls button,
+  .player-panel button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+.game-room { padding: max(4px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left)); }
+.game-viewport { position: relative; flex: 1; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; }
+.game-viewport .board-layout { flex-direction: row; gap: 12px; width: auto; }
+.game-viewport .board-play-area { flex: none; width: var(--board-width, 70vw); gap: 4px; }
+.game-viewport .board-surface { width: 100%; height: auto; aspect-ratio: 3 / 2; padding: 8px; gap: 0; }
+.game-viewport .checker-piece { width: var(--checker-size, 24px) !important; height: var(--checker-size, 24px) !important; flex-shrink: 0; transition-property: transform, opacity; }
+.game-viewport .checker-stack-item { margin: 0 !important; animation: checker-land 180ms ease-out; }
+.game-viewport .board-surface > .border-8 { border-width: 8px; }
+.game-viewport .board-surface .h-12.w-full { height: 32px; }
+.game-viewport .board-die { width: 28px !important; height: 28px !important; padding: 4px; }
+.game-viewport .bear-off-tray { width: 68px; height: auto; flex-direction: column; padding: 4px; }
+.game-viewport .bear-off-pieces { inset: 4px; flex-direction: column; gap: 8px; }
+.game-viewport .bear-off-stack { display: flex; min-height: 0; gap: 2px; }
+.game-viewport .bear-off-stack-player2 { justify-content: flex-end; }
+.game-viewport .bear-off-stack-player1 { justify-content: flex-start; }
+.game-viewport .bear-off-divider { width: 100%; height: 2px; }
+.game-viewport .bear-off-piece { height: 4px; width: 36px; }
+.game-viewport .move-controls { height: 44px; margin: 0; padding: 4px; }
+.orientation-overlay { display: none; position: fixed; inset: 0; z-index: 10000; background: radial-gradient(ellipse at top, #174a5b, #08283a); color: var(--sand); align-items: center; justify-content: center; flex-direction: column; gap: 24px; padding: 32px; text-align: center; }
+.orientation-overlay h2 { font-size: 24px; font-weight: 700; max-width: 320px; }
+.orientation-overlay p { max-width: 280px; opacity: .75; }
+.rotate-phone { width: 70px; height: 110px; border: 4px solid var(--teal); border-radius: 16px; display: grid; place-items: center; font-size: 42px; transform: rotate(90deg); }
+.connection-notice, .pass-notice { position: fixed; bottom: max(8px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); z-index: 3000; background: var(--sand); color: var(--navy); padding: 8px 16px; border-radius: 12px; font-size: 12px; }
+.connection-notice { z-index: 3001; }
+@media (min-width: 1024px) and (min-height: 600px) {
+  .game-viewport { --board-side-space: 104px; }
+  .game-viewport .board-layout { gap: 32px; }
+  .game-viewport .board-die {
+    width: 56px !important;
+    height: 56px !important;
+    padding: 8px;
+    gap: 4px;
+  }
+}
+@media (orientation: portrait) and (any-pointer: coarse) { .orientation-overlay { display: flex; } .game-room > :not(.orientation-overlay) { visibility: hidden; } }
+@keyframes dice-toss { from { opacity: .3; transform: translate3d(0, -12px, 0) rotate(-12deg); } to { opacity: 1; transform: translate3d(0, 0, 0) rotate(0); } }
+.dice-roll { animation: dice-toss 320ms ease-out; }
+@media (prefers-reduced-motion: reduce) { .game-room *, .game-room *::before, .game-room *::after { animation: none !important; transition: none !important; } }

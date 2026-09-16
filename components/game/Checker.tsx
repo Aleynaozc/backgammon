@@ -8,7 +8,7 @@ interface CheckerProps {
   count?: number; // if we want to show numbers for stacks > 5
   isSelected?: boolean;
   isClickable?: boolean;
-  onClick?: () => void;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
   className?: string;
 }
 

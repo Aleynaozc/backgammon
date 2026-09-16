@@ -1,4 +1,4 @@
-import { Player, GameState, Point } from '@/types/game';
+import { Player, GameState } from '@/types/game';
 
 export const getDirection = (player: Player) => (player === 'player1' ? 1 : -1);
 

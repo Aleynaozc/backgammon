@@ -1,6 +1,38 @@
 import { GameState, Player, Move } from '@/types/game';
 import { getDirection, isValidDestination, getOpponent } from './rules';
 
+function getBearingDistance(player: Player, from: number): number {
+  return player === 'player1' ? 24 - from : from + 1;
+}
+
+function hasPiecesFurtherFromBearingOff(state: GameState, player: Player, from: number): boolean {
+  if (player === 'player1') {
+    for (let index = 18; index < from; index += 1) {
+      if (state.board[index].player === player && state.board[index].count > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  for (let index = 5; index > from; index -= 1) {
+    if (state.board[index].player === player && state.board[index].count > 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function canBearOffFromPoint(state: GameState, player: Player, from: number, dieValue: number): boolean {
+  const { valid } = isValidDestination(state, player, 'borneOff');
+  if (!valid) return false;
+
+  const exactDistance = getBearingDistance(player, from);
+  if (dieValue === exactDistance) return true;
+
+  return dieValue > exactDistance && !hasPiecesFurtherFromBearingOff(state, player, from);
+}
+
 export function getLegalMovesForPiece(
   state: GameState,
   player: Player,
@@ -29,38 +61,10 @@ export function getLegalMovesForPiece(
 
   // If trying to bear off, we need additional checks
   if (to === 'borneOff') {
-    const { valid } = isValidDestination(state, player, 'borneOff');
-    if (!valid) return null;
-
-    // Check if exact bear off or over-bear off (only if no pieces are further behind)
-    if (from !== 'bar') {
-      const homeStart = player === 'player1' ? 18 : 0;
-      const homeEnd = player === 'player1' ? 23 : 5;
-      
-      const exactDistance = player === 'player1' ? 24 - from : from + 1;
-      
-      if (dieValue === exactDistance) {
-        return { from, to, dieValue };
-      }
-      
-      if (dieValue > exactDistance) {
-        // Can only use a larger die if there are no pieces further back
-        let hasFurtherPieces = false;
-        if (player === 'player1') {
-          for (let i = homeStart; i < from; i++) {
-            if (state.board[i].player === player) hasFurtherPieces = true;
-          }
-        } else {
-          for (let i = homeEnd; i > from; i--) {
-            if (state.board[i].player === player) hasFurtherPieces = true;
-          }
-        }
-        if (!hasFurtherPieces) {
-          return { from, to, dieValue };
-        }
-      }
+    if (from !== 'bar' && canBearOffFromPoint(state, player, from, dieValue)) {
+      return { from, to, dieValue };
     }
-    return null; // Not a valid bear off with this die
+    return null;
   }
 
   const { valid } = isValidDestination(state, player, to);

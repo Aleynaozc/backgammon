@@ -24,7 +24,7 @@ export function Die({ value, isUsed, className }: DiceProps) {
     <div
       className={twMerge(
         clsx(
-          "die h-10 w-10 rounded-xl border border-[var(--sand)] bg-[var(--papaya)] p-1.5 shadow-md sm:h-12 sm:w-12 sm:p-2",
+          "die h-10 w-10 rounded-xl bg-[var(--cream)]/95 p-1.5 sm:h-12 sm:w-12 sm:p-2",
           "grid grid-cols-3 grid-rows-3 gap-0.5",
           "transition-opacity duration-300",
           isUsed && "opacity-40"
