@@ -30,21 +30,17 @@ export function PlayerPanel({
   const shouldShowActions = showActions && isTurn && (canRoll || (!hasRolled && showDice) || (hasRolled && showDice));
 
   return (
-    <div className={clsx(
-      "player-panel flex w-full flex-col items-center gap-3 rounded-lg p-3 sm:flex-row",
-   
-    )}>
+    <div className={clsx("player-panel flex w-full flex-col items-center gap-2 p-2 sm:flex-row")}>
       
       {/* Player Info */}
       <div className="flex-1 flex flex-col min-w-0 w-full">
         <div className="flex items-center gap-2">
           {/* Color Indicator */}
-          <div className={clsx(
-            "w-4 h-4 rounded-full border shadow-sm shrink-0 border-[var(--teal)] bg-[var(--ocean)]"
-          )} />
-          <span className="truncate text-sm font-bold uppercase text-white sm:text-base">
-            {playerName} {isViewer && "(You)"}
+          <div className={clsx("h-2 w-2 rounded-full shrink-0", isTurn ? "bg-[var(--coral)]" : "bg-[var(--sand)]/60")} />
+          <span className="truncate text-xs font-medium uppercase tracking-[0.16em] text-[var(--cream)] sm:text-sm">
+            {playerName || 'Waiting for opponent'}
           </span>
+          {isViewer && <span className="text-[10px] uppercase tracking-[0.16em] text-[var(--sand)]/70">You</span>}
          
         </div>
       </div>
@@ -53,7 +49,7 @@ export function PlayerPanel({
         {canRoll ? (
           <button
             onClick={onRollDice}
-            className="rounded-lg bg-[var(--coral)] px-4 py-2 text-sm font-bold text-white shadow-md sm:text-base"
+            className="rounded-md bg-[var(--navy)] px-4 py-2 text-xs font-medium uppercase tracking-[0.12em] text-[var(--cream)] shadow-md transition-colors hover:bg-[var(--ocean)] sm:text-sm"
           >
             ROLL DICE
           </button>
@@ -67,7 +63,7 @@ export function PlayerPanel({
             )}
           </div>
         ) : (
-          <div className="text-sm italic text-[var(--brown)]/70">Rolling...</div>
+          <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--sand)]/70">Rolling...</div>
         )}
       </div>}
     </div>

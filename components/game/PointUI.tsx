@@ -29,7 +29,7 @@ export function PointUI({
   selectedChecker
 }: PointUIProps) {
   // Colors for the points
-  const colorClass = isEven ? 'bg-[var(--coral)]' : 'bg-[var(--papaya)]';
+  const colorClass = isEven ? 'bg-[var(--coral)]/75' : 'bg-[var(--sand)]';
 
   // Triangle shape
   const clipPath = isTop
@@ -52,6 +52,12 @@ export function PointUI({
         isTop ? "justify-start" : "justify-end"
       )}
     >
+      <span className={clsx(
+        'board-point-number',
+        isTop ? 'board-point-number-top' : 'board-point-number-bottom'
+      )}>
+        {pointIndex + 1}
+      </span>
       <button
         type="button"
         className="point-hitbox absolute inset-0 z-40 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--teal)]"
@@ -78,7 +84,7 @@ export function PointUI({
             style={{ clipPath }}
           />
           <div className={clsx(
-            "absolute left-1/2 z-30 flex -translate-x-1/2 items-center justify-center gap-1 rounded-full border-2 border-white bg-[var(--coral)] px-2 py-1 text-[10px] font-black text-white shadow-xl shadow-black/40 sm:text-xs",
+            "absolute left-1/2 z-30 flex -translate-x-1/2 items-center justify-center gap-1 rounded-full border border-[var(--cream)] bg-[var(--navy)] px-2 py-1 text-[10px] font-medium text-[var(--cream)] shadow-lg sm:text-xs",
             isTop ? "bottom-3" : "top-3"
           )}>
             {highlightValues.map((value, index) => (

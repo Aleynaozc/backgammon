@@ -20,6 +20,7 @@ import {
   devAutoPlayOpponentStepAction,
 } from '@/app/actions/game';
 import { createClient } from '@/lib/supabase/client';
+import { LogOut, Share2, Volume2, VolumeX, Wrench } from 'lucide-react';
 
 interface GameRoomClientProps {
   roomCode: string;
@@ -41,6 +42,7 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
   const [isJoiningAsOtherPlayer, setIsJoiningAsOtherPlayer] = useState(false);
   const [devDice, setDevDice] = useState<[number, number]>([1, 2]);
   const [devAutoOpponent, setDevAutoOpponent] = useState(false);
+  const [devPanelOpen, setDevPanelOpen] = useState(process.env.NODE_ENV === 'development');
 
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [viewerPlayer, setViewerPlayer] = useState<Player | 'spectator'>('spectator');
@@ -489,7 +491,7 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
       {!connected && <div role="status" className="connection-notice">Connection lost. Reconnecting...</div>}
       {gameState.lastPass && gameState.turnNumber <= gameState.lastPass.turnNumber + 1 && <div role="status" className="pass-notice">{playersInfo[gameState.lastPass.player]}: Pass / No legal moves</div>}
       {/* Top Bar / Opponent */}
-      <div className="flex items-center justify-between">
+      <div className="game-topbar flex items-center justify-between">
         <div className="flex-1 max-w-[200px] sm:max-w-xs">
           <PlayerPanel 
             player={viewerPlayer === 'player1' ? 'player2' : 'player1'} 
@@ -504,18 +506,18 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
         
         {/* Actions */}
         <div className="flex gap-2">
-          <button type="button" aria-pressed={feedback} className="rounded-lg bg-[var(--cream)] p-2 text-xs" onClick={() => {
+          <button type="button" aria-pressed={feedback} aria-label={feedback ? 'Disable sound' : 'Enable sound'} title={feedback ? 'Disable sound' : 'Enable sound'} className="icon-button" onClick={() => {
             const next = !feedback;
             setFeedback(next);
             try { setFeedbackEnabled(next); playFeedback('dice'); } catch { setFeedback(false); }
-          }}>Sound / vibration {feedback ? 'on' : 'off'}</button>
+          }}>{feedback ? <Volume2 size={16} strokeWidth={1.7} /> : <VolumeX size={16} strokeWidth={1.7} />}</button>
           {playersInfo.player2 !== 'Waiting...' ? (
-            <button onClick={exitGame} className="cursor-pointer rounded-lg border border-[var(--coral)]/50 bg-[var(--cream)] p-2 text-sm font-semibold text-[var(--navy)]">
-              Exit Game
+            <button onClick={exitGame} aria-label="Exit game" title="Exit game" className="icon-button">
+              <LogOut size={16} strokeWidth={1.7} />
             </button>
           ) : (
-            <button onClick={copyLink} className="cursor-pointer rounded-lg border border-[var(--ocean)]/40 bg-[var(--cream)] p-2 text-sm text-[var(--navy)]">
-              Invite
+            <button onClick={copyLink} aria-label="Invite opponent" title="Invite opponent" className="icon-button">
+              <Share2 size={16} strokeWidth={1.7} />
             </button>
           )}
         </div>
@@ -532,6 +534,11 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
         />
 
         {isDevToolsVisible && (
+          <button type="button" aria-expanded={devPanelOpen} aria-label="Open development tools" title="Development tools" className="dev-toggle" onClick={() => setDevPanelOpen((open) => !open)}>
+            <Wrench size={13} strokeWidth={1.7} /> DEV
+          </button>
+        )}
+        {isDevToolsVisible && devPanelOpen && (
           <div className="fixed right-3 top-3 z-[2500] max-h-[calc(100dvh-1.5rem)] w-[min(16rem,calc(100vw-1.5rem))] overflow-auto rounded-lg border border-[var(--teal)] bg-[var(--navy)]/95 p-3 text-[var(--sand)] shadow-2xl backdrop-blur">
             <div className="mb-2 text-xs font-bold uppercase tracking-widest text-[var(--teal)]">Dev Panel</div>
             <div className="mb-3 flex items-center gap-2">

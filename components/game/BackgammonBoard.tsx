@@ -321,10 +321,10 @@ export function BackgammonBoard({ gameState, onConfirmMoves, onPendingMovesChang
   return (
     <div className="board-layout relative flex w-full items-stretch justify-center gap-3 sm:gap-5">
       <div className="board-play-area flex min-w-0 flex-1 flex-col items-center gap-2 sm:gap-3">
-      <div className="board-surface relative w-full min-w-0 max-w-4xl aspect-[4/3] sm:aspect-[3/2] rounded-xl bg-[var(--navy)] p-2 shadow-2xl shadow-[var(--navy)]/50 sm:p-4 flex flex-col gap-4 mx-auto select-none overflow-hidden">
+      <div className="board-surface relative w-full min-w-0 max-w-4xl aspect-[4/3] sm:aspect-[3/2] rounded-[13px] bg-[#eae5d9] p-3 shadow-[0_30px_65px_-28px_rgba(16,63,74,0.31),0_5px_12px_rgba(16,63,74,0.05),inset_0_0_0_4px_#e4dfd3] sm:p-4 flex flex-col gap-4 mx-auto select-none overflow-hidden">
 
       {/* Wood Texture / Frame Inner Bevel */}
-      <div className="pointer-events-none absolute inset-0 z-0 rounded-xl border-8 border-[var(--papaya)] sm:border-[16px]"></div>
+      <div className="pointer-events-none absolute inset-0 z-0 rounded-[13px] border-8 border-[#ded8ca] sm:border-[14px]"></div>
 
       {gameState.dice.length === 2 && (
         <div key={gameState.turnNumber} className="dice-roll pointer-events-none absolute left-1/2 top-1/2 z-[999] flex -translate-x-1/2 -translate-y-1/2 gap-3">
@@ -342,7 +342,7 @@ export function BackgammonBoard({ gameState, onConfirmMoves, onPendingMovesChang
 
           {/* BAR */}
           <div
-            className="mx-2 flex h-full w-12 flex-col items-center justify-end border-x-2 border-[var(--papaya)] bg-[var(--palm)] pb-2 shadow-inner sm:w-16"
+            className="mx-2 flex h-full w-12 flex-col items-center justify-end border-x border-[var(--sand)] bg-[var(--sand)]/70 pb-2 shadow-inner sm:w-16"
           >
             {/* Player 2 Bar */}
             {renderBarCheckers('player2')}
@@ -353,7 +353,7 @@ export function BackgammonBoard({ gameState, onConfirmMoves, onPendingMovesChang
 
         {/* Middle Hinge Line */}
         <div className="relative z-30 my-1 flex h-12 w-full items-center justify-center opacity-100 sm:h-16">
-          <div className="h-[2px] w-full bg-[var(--papaya)] shadow-sm sm:h-[3px]" />
+          <div className="h-px w-full bg-[var(--sand)] shadow-sm sm:h-[2px]" />
         </div>
 
         {/* Bottom Half */}
@@ -362,7 +362,7 @@ export function BackgammonBoard({ gameState, onConfirmMoves, onPendingMovesChang
 
           {/* BAR */}
           <div
-            className="mx-2 flex h-full w-12 flex-col items-center justify-start border-x-2 border-[var(--papaya)] bg-[var(--palm)] pt-2 shadow-inner sm:w-16"
+            className="mx-2 flex h-full w-12 flex-col items-center justify-start border-x border-[var(--sand)] bg-[var(--sand)]/70 pt-2 shadow-inner sm:w-16"
           >
             {/* Player 1 Bar */}
             {renderBarCheckers('player1')}
@@ -421,17 +421,19 @@ export function BackgammonBoard({ gameState, onConfirmMoves, onPendingMovesChang
       <aside
         onClick={canBearOffSelected ? handleBearOffClick : undefined}
         className={[
-          'bear-off-tray relative flex w-16 shrink-0 flex-col justify-between rounded-xl border border-[var(--coral)] bg-[var(--coral)]/80 p-2 text-[var(--navy)] shadow-xl sm:w-24 sm:p-3',
-          canBearOffSelected ? 'cursor-pointer ring-4 ring-[var(--teal)] shadow-[0_0_28px_rgba(99,230,226,0.75)]' : '',
+          'bear-off-tray relative flex w-16 shrink-0 flex-col justify-between rounded-[4px] border border-[#d6d0c3] bg-[#ded8ca70] p-2 text-[var(--navy)] shadow-none sm:w-24 sm:p-3',
+          canBearOffSelected ? 'cursor-pointer ring-2 ring-[var(--coral)] shadow-[0_0_18px_rgba(217,130,112,0.35)]' : '',
         ].join(' ')}
       >
         <div className="bear-off-pieces absolute inset-2 flex min-h-0 flex-col items-center gap-2 sm:inset-3">
           <div className="bear-off-stack bear-off-stack-player2 flex min-h-0 flex-1 flex-col items-center justify-end gap-0.5">
+            <span className="tray-count">{previewState.borneOff.player2.toString().padStart(2, '0')}</span>
             {renderBorneOffPieces('player2', previewState.borneOff.player2)}
           </div>
           <div className="bear-off-divider h-0.5 w-full shrink-0 bg-[var(--navy)]/45" />
           <div className="bear-off-stack bear-off-stack-player1 flex min-h-0 flex-1 flex-col items-center justify-start gap-0.5">
             {renderBorneOffPieces('player1', previewState.borneOff.player1)}
+            <span className="tray-count">{previewState.borneOff.player1.toString().padStart(2, '0')}</span>
           </div>
         </div>
       </aside>
