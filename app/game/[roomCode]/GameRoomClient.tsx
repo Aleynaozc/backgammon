@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { GameViewport, OrientationOverlay } from '@/components/game/GameViewport';
 import { playFeedback, setFeedbackEnabled } from '@/lib/game/feedback';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GameState, Player, Move } from '@/types/game';
 import { BackgammonBoard } from '@/components/game/BackgammonBoard';
@@ -20,7 +21,7 @@ import {
   devAutoPlayOpponentStepAction,
 } from '@/app/actions/game';
 import { createClient } from '@/lib/supabase/client';
-import { LogOut, Share2, Volume2, VolumeX, Wrench } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Check, LogOut, Volume2, VolumeX, Waves, Wrench, X } from 'lucide-react';
 
 interface GameRoomClientProps {
   roomCode: string;
@@ -43,6 +44,9 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
   const [devDice, setDevDice] = useState<[number, number]>([1, 2]);
   const [devAutoOpponent, setDevAutoOpponent] = useState(false);
   const [devPanelOpen, setDevPanelOpen] = useState(process.env.NODE_ENV === 'development');
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const [inviteCopyError, setInviteCopyError] = useState(false);
 
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [viewerPlayer, setViewerPlayer] = useState<Player | 'spectator'>('spectator');
@@ -130,6 +134,17 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
       void supabase.removeAllChannels();
     };
   }, [supabase]);
+
+  useEffect(() => {
+    if (!inviteOpen) return;
+
+    const closeInvite = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setInviteOpen(false);
+    };
+
+    window.addEventListener('keydown', closeInvite);
+    return () => window.removeEventListener('keydown', closeInvite);
+  }, [inviteOpen]);
 
   const handleJoin = React.useCallback(async (name: string, pId?: string) => {
     setLoading(true);
@@ -298,16 +313,19 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
       }).catch(() => setConnected(false));
   }, [connected, playerId, roomCode, viewerPlayer]);
 
-  const copyLink = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'Tavla',
-        text: 'Want to play backgammon with me? 🎲',
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert('Invite link copied!');
+  const openInvite = () => {
+    setInviteCopied(false);
+    setInviteCopyError(false);
+    setInviteOpen(true);
+  };
+
+  const copyInviteLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setInviteCopied(true);
+      setInviteCopyError(false);
+    } catch {
+      setInviteCopyError(true);
     }
   };
 
@@ -483,6 +501,8 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
       : playersInfo.player2.trim().toLowerCase() === 'hector'
         ? 'player2'
         : null;
+  const waitingForOpponent = playersInfo.player2 === 'Waiting...';
+  const activePlayerName = gameState.currentPlayer === 'player1' ? playersInfo.player1 : playersInfo.player2;
 
   return (
     <div className="game-room flex h-full w-full max-w-[1400px] flex-col gap-2 p-1 sm:gap-3 sm:p-4">
@@ -490,36 +510,41 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
       <OrientationOverlay />
       {!connected && <div role="status" className="connection-notice">Connection lost. Reconnecting...</div>}
       {gameState.lastPass && gameState.turnNumber <= gameState.lastPass.turnNumber + 1 && <div role="status" className="pass-notice">{playersInfo[gameState.lastPass.player]}: Pass / No legal moves</div>}
-      {/* Top Bar / Opponent */}
-      <div className="game-topbar flex items-center justify-between">
-        <div className="flex-1 max-w-[200px] sm:max-w-xs">
-          <PlayerPanel 
-            player={viewerPlayer === 'player1' ? 'player2' : 'player1'} 
-            playerName={viewerPlayer === 'player1' ? playersInfo.player2 : playersInfo.player1}
-            gameState={gameState}
-            isOnline={connected} // TODO: Implement Presence
-            isViewer={false}
-            showActions={true}
-            showDice={false}
-          />
-        </div>
-        
-        {/* Actions */}
-        <div className="flex gap-2">
-          <button type="button" aria-pressed={feedback} aria-label={feedback ? 'Disable sound' : 'Enable sound'} title={feedback ? 'Disable sound' : 'Enable sound'} className="icon-button" onClick={() => {
+      <header className="game-topbar">
+        <span className="game-wave-logo" aria-label="Backgammon">
+          <Waves size={30} strokeWidth={1.5} aria-hidden="true" />
+          <span className="game-brand-sub">BACKGAMMON CLUB</span>
+        </span>
+        <div className="game-topbar-actions">
+          <button type="button" aria-pressed={feedback} aria-label={feedback ? 'Disable sound' : 'Enable sound'} title={feedback ? 'Disable sound' : 'Enable sound'} className="game-header-icon-button" onClick={() => {
             const next = !feedback;
             setFeedback(next);
             try { setFeedbackEnabled(next); playFeedback('dice'); } catch { setFeedback(false); }
-          }}>{feedback ? <Volume2 size={16} strokeWidth={1.7} /> : <VolumeX size={16} strokeWidth={1.7} />}</button>
+          }}>{feedback ? <Volume2 size={18} /> : <VolumeX size={18} />}</button>
           {playersInfo.player2 !== 'Waiting...' ? (
-            <button onClick={exitGame} aria-label="Exit game" title="Exit game" className="icon-button">
-              <LogOut size={16} strokeWidth={1.7} />
+            <button onClick={exitGame} aria-label="Exit game" title="Exit game" className="game-header-icon-button">
+              <LogOut size={18} />
             </button>
           ) : (
-            <button onClick={copyLink} aria-label="Invite opponent" title="Invite opponent" className="icon-button">
-              <Share2 size={16} strokeWidth={1.7} />
+            <button onClick={openInvite} aria-label="Invite a friend" title="Invite a friend" className="game-invite-button">
+              Invite a friend <ArrowUpRight size={15} strokeWidth={1.7} />
             </button>
           )}
+        </div>
+      </header>
+
+      <div className="game-player-row">
+        <div className="game-player">
+          <span className="game-player-dot game-ivory-dot" />
+          <span>{playersInfo.player1}<small>{viewerPlayer === 'player1' ? 'YOU' : 'IVORY'}</small></span>
+        </div>
+        <span className="game-status" role="status">
+          <i />
+          {waitingForOpponent ? 'WAITING FOR OPPONENT' : gameState.status === 'FINISHED' ? `${gameState.winner === 'player1' ? playersInfo.player1 : playersInfo.player2} WINS` : `${activePlayerName}’S TURN`}
+        </span>
+        <div className="game-player game-opponent">
+          <span>{waitingForOpponent ? 'OPEN SEAT' : playersInfo.player2}<small>{viewerPlayer === 'player2' ? 'YOU' : waitingForOpponent ? 'INVITE A FRIEND' : 'OCEAN'}</small></span>
+          <span className={`game-player-dot ${waitingForOpponent ? 'game-empty-dot' : 'game-teal-dot'}`} />
         </div>
       </div>
 
@@ -636,6 +661,28 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
           </div>
         )}
       </div>
+
+      <footer className="game-footer">
+        <Link href="/"><ArrowLeft size={13} /> Back to lobby</Link>
+      </footer>
+
+      {inviteOpen && (
+        <div className="game-invite-backdrop" onClick={() => setInviteOpen(false)}>
+          <section className="game-invite-modal" role="dialog" aria-modal="true" aria-labelledby="game-invite-title" onClick={(event) => event.stopPropagation()}>
+            <button autoFocus type="button" className="game-invite-close" aria-label="Close invitation" onClick={() => setInviteOpen(false)}>
+              <X size={20} />
+            </button>
+            <p className="game-invite-eyebrow">THERE&apos;S ROOM FOR TWO</p>
+            <h2 id="game-invite-title">Better with company.</h2>
+            <p>Copy this room link and send it to a friend. They&apos;ll join this table as player two and can start playing with you.</p>
+            <button type="button" className="game-invite-copy" onClick={() => void copyInviteLink()}>
+              {inviteCopied ? <Check size={16} /> : <ArrowUpRight size={16} />}
+              {inviteCopied ? 'Invite link copied' : 'Copy invite link'}
+            </button>
+            {inviteCopyError && <p className="game-invite-error" role="status">Copy the address from your browser to share this game.</p>}
+          </section>
+        </div>
+      )}
 
     </div>
   );

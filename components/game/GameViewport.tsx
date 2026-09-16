@@ -12,6 +12,11 @@ export function GameViewport({ children }: { children: ReactNode }) {
       const boardWidth = Math.max(1, Math.min(896, width - sideSpace, (height - 52) * 1.5));
       element.style.setProperty('--board-width', `${boardWidth}px`);
       element.style.setProperty('--checker-size', `${Math.max(4, Math.min(48, (boardWidth / 1.5 - 90) / 10, (boardWidth - 110) / 12))}px`);
+      const boardLayout = element.querySelector<HTMLElement>('.board-layout');
+      const room = element.parentElement;
+      if (boardLayout && room) {
+        room.style.setProperty('--game-board-row-width', `${boardLayout.getBoundingClientRect().width}px`);
+      }
     });
     observer.observe(element);
     return () => observer.disconnect();
