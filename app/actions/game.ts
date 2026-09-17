@@ -7,12 +7,9 @@ import { Json } from '@/types/supabase';
 import { rollDice } from '@/lib/game/rules';
 import { getAllLegalMoves, validateMoveRule, checkTurnEnd } from '@/lib/game/engine';
 import { applyMove } from '@/lib/game/moves';
+import { isGameDevToolsEnabled } from '@/lib/game/dev-tools';
 
 type DevPreset = 'bar' | 'bearOff' | 'hit' | 'finish';
-
-function isDevToolsEnabled() {
-  return process.env.NODE_ENV === 'development';
-}
 
 function createEmptyBoard(): GameState['board'] {
   return Array.from({ length: 24 }, () => ({ player: null, count: 0 }));
@@ -496,7 +493,7 @@ export async function updatePendingMovesAction(roomCode: string, playerId: strin
 }
 
 export async function devSetDiceAction(roomCode: string, playerId: string, dice: [number, number]) {
-  if (!isDevToolsEnabled()) return { error: 'Dev tools are only available in development.' };
+  if (!isGameDevToolsEnabled()) return { error: 'Dev tools are disabled.' };
   if (dice.some((value) => !Number.isInteger(value) || value < 1 || value > 6)) {
     return { error: 'Dice values must be between 1 and 6.' };
   }
@@ -542,7 +539,7 @@ export async function devSetDiceAction(roomCode: string, playerId: string, dice:
 }
 
 export async function devLoadPresetAction(roomCode: string, playerId: string, preset: DevPreset) {
-  if (!isDevToolsEnabled()) return { error: 'Dev tools are only available in development.' };
+  if (!isGameDevToolsEnabled()) return { error: 'Dev tools are disabled.' };
   if (!['bar', 'bearOff', 'hit', 'finish'].includes(preset)) return { error: 'Unknown preset.' };
 
   const supabase = await createAdminClient();
@@ -578,7 +575,7 @@ export async function devLoadPresetAction(roomCode: string, playerId: string, pr
 }
 
 export async function devAutoPlayOpponentStepAction(roomCode: string, playerId: string) {
-  if (!isDevToolsEnabled()) return { error: 'Dev tools are only available in development.' };
+  if (!isGameDevToolsEnabled()) return { error: 'Dev tools are disabled.' };
 
   const supabase = await createAdminClient();
   const { data: game } = await supabase

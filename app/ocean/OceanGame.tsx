@@ -1,5 +1,7 @@
 'use client';
 
+import { isGameDevToolsEnabled } from '@/lib/game/dev-tools';
+
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowUpRight, Check, Dices, RotateCcw, Volume2, VolumeX, X } from 'lucide-react';
@@ -119,6 +121,6 @@ export default function OceanGame() {
     <footer className={s.footer}><Link href="/"><ArrowLeft size={13} /> Back to lobby</Link><span>A QUIETER KIND OF COMPETITION.</span><button onClick={start}>{waiting ? 'Try a local game' : 'Restart local game'} <ArrowUpRight size={13} /></button></footer>
 
     {invite && <div className={s.backdrop} onClick={() => setInvite(false)}><section className={s.modal} role="dialog" aria-modal="true" aria-labelledby="invite-title" onClick={event => event.stopPropagation()}><button autoFocus className={s.close} aria-label="Close invitation" onClick={() => setInvite(false)}><X size={20} /></button><p className={s.eyebrow}>THERE’S ROOM FOR TWO</p><h2 id="invite-title">Better with company.</h2><p>This table is a design preview with a local two-player mode. Share the preview, or head to the lobby to create an online game.</p><button className={s.primary} onClick={async () => { try { await navigator.clipboard.writeText(window.location.href); setCopied(true); setCopyError(false); } catch { setCopyError(true); } }}>{copied ? <Check size={16} /> : <ArrowUpRight size={16} />}{copied ? 'Preview link copied' : 'Copy preview link'}</button>{copyError && <p role="status">Copy the address from your browser to share this preview.</p>}<Link className={s.modalLink} href="/">Create an online game <ArrowUpRight size={15} /></Link></section></div>}
-    {process.env.NODE_ENV === 'development' && <div className={s.dev}><button onClick={() => setDev(!dev)} aria-expanded={dev}>DEV</button>{dev && <div><p>Ocean / local preview</p><button onClick={() => { setGame(getInitialGameState()); setSelected(null); setHistory([]); }}>Reset waiting state</button><button onClick={start}>Start local game</button></div>}</div>}
+    {isGameDevToolsEnabled() && <div className={s.dev}><button onClick={() => setDev(!dev)} aria-expanded={dev}>DEV</button>{dev && <div><p>Ocean / local preview</p><button onClick={() => { setGame(getInitialGameState()); setSelected(null); setHistory([]); }}>Reset waiting state</button><button onClick={start}>Start local game</button></div>}</div>}
   </main>;
 }

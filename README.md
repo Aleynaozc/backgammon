@@ -34,3 +34,12 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Development game tools
+
+Test panels, preset boards, manual dice and the automatic test opponent are disabled
+by default. Their code is retained. To enable them locally, add
+`NEXT_PUBLIC_ENABLE_GAME_DEV_TOOLS=true` to `.env.local` and restart `npm run dev`.
+Remove the setting (or set it to `false`) to disable them again.
+Production builds always disable these tools, including their server actions,
+even if this setting is enabled.

@@ -1,5 +1,7 @@
 'use client';
 
+import { isGameDevToolsEnabled } from '@/lib/game/dev-tools';
+
 import React, { useState, useEffect } from 'react';
 import { GameViewport } from '@/components/game/GameViewport';
 import { playFeedback, setFeedbackEnabled } from '@/lib/game/feedback';
@@ -43,7 +45,7 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
   const [isJoiningAsOtherPlayer, setIsJoiningAsOtherPlayer] = useState(false);
   const [devDice, setDevDice] = useState<[number, number]>([1, 2]);
   const [devAutoOpponent, setDevAutoOpponent] = useState(false);
-  const [devPanelOpen, setDevPanelOpen] = useState(process.env.NODE_ENV === 'development');
+  const [devPanelOpen, setDevPanelOpen] = useState(isGameDevToolsEnabled());
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [inviteCopyError, setInviteCopyError] = useState(false);
@@ -315,7 +317,7 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
     router.push('/');
   };
 
-  const isDevToolsVisible = process.env.NODE_ENV === 'development' && viewerPlayer !== 'spectator';
+  const isDevToolsVisible = isGameDevToolsEnabled() && viewerPlayer !== 'spectator';
 
   const applyDevResult = (result: { error?: string; gameState?: unknown }) => {
     if (result.error) {
