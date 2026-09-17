@@ -21,7 +21,7 @@ import {
   devAutoPlayOpponentStepAction,
 } from '@/app/actions/game';
 import { createClient } from '@/lib/supabase/client';
-import { ArrowLeft, ArrowUpRight, Check, Heart, LogOut, Volume2, VolumeX, Waves, Wrench, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Check, Heart, LogOut, Volume2, VolumeX, Wrench, X } from 'lucide-react';
 
 interface GameRoomClientProps {
   roomCode: string;
@@ -490,8 +490,8 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
       {!connected && <div role="status" className="connection-notice">Connection lost. Reconnecting...</div>}
       {gameState.lastPass && gameState.turnNumber <= gameState.lastPass.turnNumber + 1 && <div role="status" className="pass-notice">{playersInfo[gameState.lastPass.player]}: Pass / No legal moves</div>}
       <header className="game-topbar">
-        <span className="game-wave-logo" aria-label="Backgammon">
-          <Waves size={30} strokeWidth={1.5} aria-hidden="true" />
+        <span className="game-brand-logo" aria-label="Backgammon">
+          <Image src="/backgammon-logo.png" alt="" width={40} height={40} className="game-brand-logo-image" />
           <span className="game-brand-sub">BACKGAMMON CLUB</span>
         </span>
         <div className="game-topbar-actions">
