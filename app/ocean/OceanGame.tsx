@@ -92,7 +92,7 @@ export default function OceanGame() {
     </header>
 
     <section className={s.gameArea} aria-label="Backgammon table">
-      <div className={s.tableHeading}><div><p className={s.eyebrow}>GOOD COMPANY. A LITTLE COMPETITION.</p><h1>Make time for a good game.</h1></div><span className={s.tableLabel}>TABLE <b>01</b></span></div>
+      <div className={s.tableHeading}><div><p className={s.eyebrow}>GOOD TEAM. A LITTLE COMPETITION.</p><h1>Make time for a good game.</h1></div><span className={s.tableLabel}>TURKISH X SPANISH <b>01</b></span></div>
       <div className={s.playerRow}>
         <div className={s.player}><span className={`${s.playerDot} ${s.ivoryDot}`} /><span>ALEYNA <small>{waiting ? 'YOU' : 'IVORY'}</small></span></div>
         <span className={s.status} role="status"><i />{waiting ? 'WAITING FOR OPPONENT' : finished ? `${game.winner === 'player1' ? 'ALEYNA' : 'GUEST'} WINS` : `${name}’S TURN`}</span>

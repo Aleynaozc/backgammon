@@ -1,3 +1,4 @@
+import roomStyles from './GameRoomBoard.module.css';
 import React from 'react';
 import { Point as PointType } from '@/types/game';
 import { Checker } from './Checker';
@@ -29,7 +30,7 @@ export function PointUI({
   selectedChecker
 }: PointUIProps) {
   // Colors for the points
-  const colorClass = isEven ? 'bg-[var(--coral)]/75' : 'bg-[var(--sand)]';
+  const colorClass = isEven ? 'bg-[#ded8ca]' : 'bg-[#d39784]';
 
   // Triangle shape
   const clipPath = isTop
@@ -48,6 +49,7 @@ export function PointUI({
     <div
       className={clsx(
         "point-touch-area relative w-full h-full flex flex-col items-center group",
+        roomStyles.gameRoomPointTouch,
         canInteract ? "cursor-pointer" : "cursor-default",
         isTop ? "justify-start" : "justify-end"
       )}
@@ -69,7 +71,8 @@ export function PointUI({
       {/* The Triangle */}
       <div
         className={clsx(
-          "absolute w-[80%] h-full opacity-90 transition-all duration-200",
+          "absolute h-full transition-all duration-200",
+          roomStyles.gameRoomTriangle,
           colorClass,
           isHighlighted && "z-10 opacity-100 ring-4 ring-[var(--teal)] shadow-[0_0_28px_rgba(99,230,226,0.95)]"
         )}
@@ -97,6 +100,7 @@ export function PointUI({
       {/* Checkers Container */}
       <div className={clsx(
         "absolute flex flex-col z-20 w-full items-center",
+        roomStyles.gameRoomStack,
         isTop ? "top-0" : "bottom-0"
       )}>
         {checkers.map((idx) => {

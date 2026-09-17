@@ -8,26 +8,24 @@ export function GameViewport({ children }: { children: ReactNode }) {
     if (!element) return;
     const observer = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
-      const sideSpace = Number.parseFloat(getComputedStyle(element).getPropertyValue('--board-side-space')) || 84;
-      const boardWidth = Math.max(1, Math.min(896, width - sideSpace, (height - 52) * 1.5));
-      element.style.setProperty('--board-width', `${boardWidth}px`);
-      element.style.setProperty('--checker-size', `${Math.max(4, Math.min(48, (boardWidth / 1.5 - 90) / 10, (boardWidth - 110) / 12))}px`);
-      const boardLayout = element.querySelector<HTMLElement>('.board-layout');
-      const room = element.parentElement;
-      if (boardLayout && room) {
-        room.style.setProperty('--game-board-row-width', `${boardLayout.getBoundingClientRect().width}px`);
+      const compact = window.matchMedia('(orientation: landscape) and (max-height: 650px)').matches;
+      const portrait = window.matchMedia('(max-width: 700px) and (orientation: portrait)').matches;
+      const ratio = compact ? 2.12 : portrait ? 1.22 : window.innerWidth >= 1500 ? 2.02 : 1.96;
+      const frameWidth = Math.max(1, Math.min(width, height * ratio, window.innerWidth >= 1500 ? 1160 : 1060));
+      element.style.setProperty('--game-room-frame-width', `${frameWidth}px`);
+      element.style.setProperty('--game-room-scale', `${Math.max(.75, Math.min(1.2, frameWidth / ratio / 260))}`);
+      element.parentElement?.style.setProperty('--game-board-row-width', `${frameWidth}px`);
+      // Measure the rendered point so every checker fits both its lane and a full stack.
+      const point = element.querySelector<HTMLElement>('[data-room-point]');
+      if (point) {
+        const { width: pointWidth, height: pointHeight } = point.getBoundingClientRect();
+        const gap = compact ? 1 : portrait ? 3 : 2;
+        const diameter = Math.max(1, Math.min(48, pointWidth * .88, (pointHeight - 4 - 4 * gap) / 5));
+        element.style.setProperty('--checker-size', `${diameter}px`);
       }
     });
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
   return <div ref={host} className="game-viewport">{children}</div>;
-}
-
-export function OrientationOverlay() {
-  return <div className="orientation-overlay" role="status" aria-live="polite">
-    <div className="rotate-phone" aria-hidden="true">&#8635;</div>
-    <h2>Please rotate your device to landscape</h2>
-    <p>Your board is ready. Turn your device to continue.</p>
-  </div>;
 }

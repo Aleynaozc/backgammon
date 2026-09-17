@@ -1,3 +1,4 @@
+import roomStyles from './GameRoomBoard.module.css';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { GameState, Player, Move } from '@/types/game';
 import { PointUI } from './PointUI';
@@ -28,7 +29,7 @@ export function BackgammonBoard({ gameState, onConfirmMoves, onPendingMovesChang
     moves: [],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showHector, setShowHector] = useState(false);
+  const [hectorPlayback, setHectorPlayback] = useState({ remaining: 0, sequence: 0 });
   const lastDiceTurn = useRef<number | null>(null);
   useEffect(() => {
     if (gameState.dice.length === 2 && lastDiceTurn.current !== gameState.turnNumber) {
@@ -37,7 +38,7 @@ export function BackgammonBoard({ gameState, onConfirmMoves, onPendingMovesChang
     }
   }, [gameState.dice.length, gameState.turnNumber]);
   const previousGameStateRef = useRef<GameState | null>(null);
-  const hectorTimerRef = useRef<number | null>(null);
+  const lastHectorCaptureVersionRef = useRef(-1);
   const publishedPendingMovesRef = useRef<string | null>(null);
 
   const pendingMoves = useMemo(
@@ -69,32 +70,34 @@ export function BackgammonBoard({ gameState, onConfirmMoves, onPendingMovesChang
 
   useEffect(() => {
     const previousGameState = previousGameStateRef.current;
+    // Ignore delayed snapshots so the same committed turn cannot trigger again.
+    if (previousGameState && gameState.version < previousGameState.version) return;
     previousGameStateRef.current = gameState;
 
     if (!previousGameState || viewerPlayer === 'spectator' || !hectorPlayer) return;
 
     const capturedPlayer = hectorPlayer === 'player1' ? 'player2' : 'player1';
-    const wasHectorCapture = gameState.bar[capturedPlayer] > previousGameState.bar[capturedPlayer];
-    if (!wasHectorCapture) return;
+    const captures = gameState.bar[capturedPlayer] - previousGameState.bar[capturedPlayer];
+    if (
+      captures <= 0 ||
+      previousGameState.currentPlayer !== hectorPlayer ||
+      gameState.version <= previousGameState.version ||
+      gameState.version <= lastHectorCaptureVersionRef.current ||
+      gameState.pendingPreview ||
+      (gameState.turnNumber <= previousGameState.turnNumber && gameState.status !== 'FINISHED')
+    ) return;
 
-    if (hectorTimerRef.current !== null) {
-      window.clearTimeout(hectorTimerRef.current);
-    }
-
-    setShowHector(true);
-    hectorTimerRef.current = window.setTimeout(() => {
-      setShowHector(false);
-      hectorTimerRef.current = null;
-    }, 3000);
+    // One playback per confirmed turn, regardless of how many checkers were hit.
+    lastHectorCaptureVersionRef.current = gameState.version;
+    setHectorPlayback(current => ({ ...current, remaining: current.remaining + 1 }));
   }, [gameState, hectorPlayer, viewerPlayer]);
 
-  useEffect(() => {
-    return () => {
-      if (hectorTimerRef.current !== null) {
-        window.clearTimeout(hectorTimerRef.current);
-      }
-    };
-  }, []);
+  const finishHectorPlayback = () => {
+    setHectorPlayback(current => ({
+      remaining: Math.max(0, current.remaining - 1),
+      sequence: current.sequence + 1,
+    }));
+  };
 
   const localPreviewState = pendingMoves.reduce((state, move) => applyMove(state, move), gameState);
   const remotePendingMoves =
@@ -177,6 +180,18 @@ export function BackgammonBoard({ gameState, onConfirmMoves, onPendingMovesChang
   const handlePointClick = (index: number) => {
     if (!canInteractWithBoard) return;
 
+    // A highlighted destination keeps priority over selecting a new source.
+    // Otherwise, one tap on an eligible checker bears it off using the same
+    // validated move / pending preview / undo flow as a normal board move.
+    const destinationMove = highlightedDestinations.find(move => move.to === index);
+    if (!destinationMove) {
+      const bearOffMove = getBearOffMove(index);
+      if (bearOffMove) {
+        playMove(bearOffMove);
+        return;
+      }
+    }
+
     // If already selected, try to move to this point
     if (selectedPoint !== null) {
       if (selectedPoint === index) {
@@ -246,7 +261,7 @@ export function BackgammonBoard({ gameState, onConfirmMoves, onPendingMovesChang
       <button
         type="button"
         className="bar-hitbox relative flex h-full min-h-0 w-full flex-col items-center overflow-hidden rounded-sm py-1 focus-visible:outline-2 focus-visible:outline-[var(--teal)]"
-        style={{ justifyContent: player === 'player2' ? 'flex-end' : 'flex-start' }}
+        style={{ justifyContent: player === 'player2' ? 'flex-start' : 'flex-end' }}
         disabled={!canClickTopBarChecker}
         aria-label={`Select ${player === 'player1' ? 'white' : 'blue'} checkers on bar, ${count} checkers`}
         aria-pressed={selectedPoint === 'bar' && viewerPlayer === player}
@@ -270,7 +285,7 @@ export function BackgammonBoard({ gameState, onConfirmMoves, onPendingMovesChang
 
   const renderHalfBoard = (indices: number[], isTop: boolean) => {
     return (
-      <div className="flex min-w-0 flex-1 h-full">
+      <div className={roomStyles.gameRoomHalf}>
         {indices.map((idx) => {
           const destinationMoves = highlightedDestinations.filter(m => m.to === idx);
           const isHighlighted = destinationMoves.length > 0;
@@ -278,7 +293,7 @@ export function BackgammonBoard({ gameState, onConfirmMoves, onPendingMovesChang
           const checkerCanBeClicked = isHighlighted || canClickSourceChecker(idx);
 
           return (
-            <div key={idx} className="min-w-0 flex-1 px-[1px] sm:px-[2px]">
+            <div key={idx} className={roomStyles.gameRoomPoint} data-room-point>
               <PointUI
                 pointIndex={idx}
                 pointData={previewState.board[idx]}
@@ -319,30 +334,26 @@ export function BackgammonBoard({ gameState, onConfirmMoves, onPendingMovesChang
   };
 
   return (
-    <div className="board-layout relative flex w-full items-stretch justify-center gap-3 sm:gap-5">
-      <div className="board-play-area flex min-w-0 flex-1 flex-col items-center gap-2 sm:gap-3">
-      <div className="board-surface relative w-full min-w-0 max-w-4xl aspect-[4/3] sm:aspect-[3/2] rounded-[13px] bg-[#eae5d9] p-3 shadow-[0_30px_65px_-28px_rgba(16,63,74,0.31),0_5px_12px_rgba(16,63,74,0.05),inset_0_0_0_4px_#e4dfd3] sm:p-4 flex flex-col gap-4 mx-auto select-none overflow-hidden">
-
-      {/* Wood Texture / Frame Inner Bevel */}
-      <div className="pointer-events-none absolute inset-0 z-0 rounded-[13px] border-8 border-[#ded8ca] sm:border-[14px]"></div>
+    <div className={roomStyles.gameRoomFrame}>
+      <div className={roomStyles.gameRoomBoard}>
 
       {gameState.dice.length === 2 && (
-        <div key={gameState.turnNumber} className="dice-roll pointer-events-none absolute left-1/2 top-1/2 z-[999] flex -translate-x-1/2 -translate-y-1/2 gap-3">
-          <Die value={gameState.dice[0]} isUsed={!previewState.remainingMoves.includes(gameState.dice[0])} className="board-die h-12 w-12 sm:h-16 sm:w-16" />
-          <Die value={gameState.dice[1]} isUsed={!previewState.remainingMoves.includes(gameState.dice[1])} className="board-die h-12 w-12 sm:h-16 sm:w-16" />
+        <div key={gameState.turnNumber} className={`dice-roll ${roomStyles.gameRoomDice}`}>
+          <Die value={gameState.dice[0]} isUsed={!previewState.remainingMoves.includes(gameState.dice[0])} className={roomStyles.gameRoomDie} />
+          <Die value={gameState.dice[1]} isUsed={!previewState.remainingMoves.includes(gameState.dice[1])} className={roomStyles.gameRoomDie} />
         </div>
       )}
 
       {/* Board Layout */}
-      <div className="flex-1 flex flex-col z-10">
+      <div className={roomStyles.gameRoomInner}>
 
         {/* Top Half */}
-        <div className="flex-1 flex w-full relative">
+        <div className={roomStyles.gameRoomRow}>
           {renderHalfBoard(topIndicesLeft, true)}
 
           {/* BAR */}
           <div
-            className="mx-2 flex h-full w-12 flex-col items-center justify-end border-x border-[var(--sand)] bg-[var(--sand)]/70 pb-2 shadow-inner sm:w-16"
+            className={roomStyles.gameRoomBar}
           >
             {/* Player 2 Bar */}
             {renderBarCheckers('player2')}
@@ -352,17 +363,17 @@ export function BackgammonBoard({ gameState, onConfirmMoves, onPendingMovesChang
         </div>
 
         {/* Middle Hinge Line */}
-        <div className="relative z-30 my-1 flex h-12 w-full items-center justify-center opacity-100 sm:h-16">
+        <div className={roomStyles.gameRoomCenter}>
           <div className="h-px w-full bg-[var(--sand)] shadow-sm sm:h-[2px]" />
         </div>
 
         {/* Bottom Half */}
-        <div className="flex-1 flex w-full relative">
+        <div className={roomStyles.gameRoomRow}>
           {renderHalfBoard(bottomIndicesLeft, false)}
 
           {/* BAR */}
           <div
-            className="mx-2 flex h-full w-12 flex-col items-center justify-start border-x border-[var(--sand)] bg-[var(--sand)]/70 pt-2 shadow-inner sm:w-16"
+            className={roomStyles.gameRoomBar}
           >
             {/* Player 1 Bar */}
             {renderBarCheckers('player1')}
@@ -373,21 +384,8 @@ export function BackgammonBoard({ gameState, onConfirmMoves, onPendingMovesChang
 
       </div>
 
-      {/* Bear Off Trays - Simplified implementation for MVP. Displayed outside the main board or as a side panel */}
-      {/* For mobile-first, we can just show a button or zone for bearing off when valid */}
-      {canBearOffSelected && (
-        <div className="absolute inset-y-0 right-3 z-[1200] flex items-center justify-center pointer-events-none">
-          <button
-            onClick={handleBearOffClick}
-            className="pointer-events-auto rounded-full border-2 border-white bg-[var(--coral)] px-5 py-3 text-sm font-black uppercase text-white shadow-2xl shadow-black/50 sm:px-6 sm:text-base"
-          >
-            BEAR OFF
-          </button>
-        </div>
-      )}
-
       {showMoveControls && (
-        <div className="board-move-controls pointer-events-none absolute inset-x-3 top-1/2 z-[1100] flex -translate-y-1/2 items-center justify-between sm:inset-x-5">
+        <div className={`board-move-controls ${roomStyles.gameRoomMoveControls}`}>
           <button
             type="button"
             onClick={() => {
@@ -416,12 +414,21 @@ export function BackgammonBoard({ gameState, onConfirmMoves, onPendingMovesChang
         </div>
       )}
       </div>
-      </div>
 
       <aside
+        role="button"
+        tabIndex={canBearOffSelected ? 0 : -1}
+        aria-label="Bear off selected checker"
+        aria-disabled={!canBearOffSelected}
+        onKeyDown={(event) => {
+          if (canBearOffSelected && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault();
+            handleBearOffClick();
+          }
+        }}
         onClick={canBearOffSelected ? handleBearOffClick : undefined}
         className={[
-          'bear-off-tray relative flex w-16 shrink-0 flex-col justify-between rounded-[4px] border border-[#d6d0c3] bg-[#ded8ca70] p-2 text-[var(--navy)] shadow-none sm:w-24 sm:p-3',
+          roomStyles.gameRoomTray,
           canBearOffSelected ? 'cursor-pointer ring-2 ring-[var(--coral)] shadow-[0_0_18px_rgba(217,130,112,0.35)]' : '',
         ].join(' ')}
       >
@@ -438,12 +445,24 @@ export function BackgammonBoard({ gameState, onConfirmMoves, onPendingMovesChang
         </div>
       </aside>
 
-      {showHector && (
+      {hectorPlayback.remaining > 0 && (
         <div className="pointer-events-none fixed inset-0 z-[2000] flex items-center justify-center bg-[var(--navy)]/70 p-6">
           <video
+            key={hectorPlayback.sequence}
             src="/hector.mp4"
             aria-label="Hector has captured a checker"
-            autoPlay
+            onLoadedData={(event) => {
+              const video = event.currentTarget;
+              if (video.dataset.playbackStarted) return;
+              video.dataset.playbackStarted = 'true';
+              void video.play().catch(() => {
+                // Mobile browsers may block sound on remotely triggered playback.
+                video.muted = true;
+                void video.play().catch(finishHectorPlayback);
+              });
+            }}
+            onEnded={finishHectorPlayback}
+            onError={finishHectorPlayback}
             loop={false}
             playsInline
             className="hector-capture max-h-[78vh] w-[min(82vw,460px)] object-cover shadow-2xl"

@@ -33,7 +33,7 @@ export function Checker({
             ? "bg-[var(--cream)] border-[var(--sand)] text-[var(--navy)]"
             : "bg-[var(--ocean)] border-[var(--teal)] text-[var(--navy)]",
           isClickable && "cursor-pointer hover:scale-105",
-          isSelected && "z-10 scale-105 ring-2 ring-[var(--coral)]/80 shadow-lg",
+          isSelected && "z-10 ring-2 ring-[var(--coral)]/80 shadow-lg",
           !isClickable && "cursor-default"
         ),
         className

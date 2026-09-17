@@ -13,8 +13,8 @@ export function Die({ value, isUsed, className }: DiceProps) {
 
   const dotPositions: Record<number, string[]> = {
     1: ['col-start-2 row-start-2'],
-    2: ['col-start-1 row-start-3', 'col-start-3 row-start-1'],
-    3: ['col-start-1 row-start-3', 'col-start-2 row-start-2', 'col-start-3 row-start-1'],
+    2: ['col-start-1 row-start-1', 'col-start-3 row-start-3'],
+    3: ['col-start-1 row-start-1', 'col-start-2 row-start-2', 'col-start-3 row-start-3'],
     4: ['col-start-1 row-start-1', 'col-start-3 row-start-1', 'col-start-1 row-start-3', 'col-start-3 row-start-3'],
     5: ['col-start-1 row-start-1', 'col-start-3 row-start-1', 'col-start-2 row-start-2', 'col-start-1 row-start-3', 'col-start-3 row-start-3'],
     6: ['col-start-1 row-start-1', 'col-start-3 row-start-1', 'col-start-1 row-start-2', 'col-start-3 row-start-2', 'col-start-1 row-start-3', 'col-start-3 row-start-3'],
@@ -22,6 +22,7 @@ export function Die({ value, isUsed, className }: DiceProps) {
 
   return (
     <div
+      aria-label={`Die: ${value}${isUsed ? ", used" : ""}`}
       className={twMerge(
         clsx(
           "die h-10 w-10 rounded-xl bg-[var(--cream)]/95 p-1.5 sm:h-12 sm:w-12 sm:p-2",

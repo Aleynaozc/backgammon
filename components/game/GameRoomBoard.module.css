@@ -1,0 +1,152 @@
+.gameRoomFrame {
+  --room-frame-padding: 19px;
+  --room-frame-gap: 13px;
+  --room-tray-width: 34px;
+  position: relative;
+  display: flex;
+  gap: var(--room-frame-gap);
+  padding: var(--room-frame-padding);
+  width: var(--game-room-frame-width, 100%);
+  aspect-ratio: 1.96;
+  flex: none;
+  border: 1px solid #faf7ef;
+  border-radius: 13px;
+  background: #eae5d9;
+  box-shadow: 0 30px 65px -28px #103f4a50, 0 5px 12px #103f4a0c, inset 0 0 0 4px #e4dfd3;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.gameRoomBoard {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  --room-board-inset: 12px;
+  padding: 21px var(--room-board-inset);
+  background: #f4f0e8;
+  border: 1px solid #d6d0c2;
+  border-radius: 5px;
+  box-shadow: inset 0 1px 5px #103f4a07;
+  isolation: isolate;
+}
+.gameRoomBoard::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  left: 50%;
+  width: 4.2%;
+  transform: translateX(-50%);
+  border-inline: 1px solid #dad4c7;
+  background: #e8e2d7;
+  z-index: -1;
+}
+.gameRoomInner { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
+.gameRoomRow { display: flex; flex: 1; min-height: 0; position: relative; }
+.gameRoomHalf { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); flex: 6; min-width: 0; }
+.gameRoomPoint { min-width: 0; }
+.gameRoomBar { display: flex; flex: .62; min-width: 0; position: relative; z-index: 2; }
+.gameRoomCenter { height: 19%; flex-shrink: 0; display: flex; align-items: center; padding-inline: 18px; pointer-events: none; }
+.gameRoomPoint .gameRoomPointTouch { overflow: visible; }
+.gameRoomTriangle { width: 92%; }
+.gameRoomStack { height: calc(100% - 4px); gap: 2px; transform: translateY(2px); }
+.gameRoomRow:last-child .gameRoomStack { transform: translateY(-2px); }
+.gameRoomTray { position: relative; width: var(--room-tray-width); flex-shrink: 0; border: 1px solid #d6d0c3; border-radius: 4px; background: #ded8ca70; color: var(--navy); }
+@media (min-width: 1500px) { .gameRoomFrame { aspect-ratio: 2.02; } }
+@media (max-width: 700px) and (orientation: portrait) {
+  .gameRoomFrame { --room-frame-padding: 10px; --room-frame-gap: 7px; --room-tray-width: 22px; aspect-ratio: 1.22; border-radius: 9px; }
+  .gameRoomBoard { --room-board-inset: 5px; padding: 19px var(--room-board-inset); }
+  .gameRoomTriangle { width: 96%; }
+  .gameRoomStack { gap: 3px; }
+}
+@media (orientation: landscape) and (max-height: 650px) {
+  .gameRoomFrame { --room-frame-padding: calc(10px * var(--game-room-scale, 1)); --room-frame-gap: calc(8px * var(--game-room-scale, 1)); --room-tray-width: calc(25px * var(--game-room-scale, 1)); aspect-ratio: 2.12; border-radius: 8px; }
+  .gameRoomBoard { --room-board-inset: 7px; padding: 15px var(--room-board-inset); }
+  .gameRoomStack { gap: 1px; }
+  .gameRoomPointTouch :global(.board-point-number-top) { top: -13px; }
+  .gameRoomPointTouch :global(.board-point-number-bottom) { bottom: -13px; }
+}
+/* One measured diameter for every checker; stack wrappers must never compress. */
+.gameRoomRow:first-child .gameRoomStack { justify-content: flex-start; }
+.gameRoomRow:last-child .gameRoomStack { justify-content: flex-end; }
+.gameRoomStack > :global(.checker-stack-item) {
+  flex: 0 0 var(--checker-size, 24px);
+  width: var(--checker-size, 24px);
+  height: var(--checker-size, 24px);
+}
+.gameRoomFrame :global(.checker-piece) {
+  aspect-ratio: 1;
+  min-width: var(--checker-size, 24px);
+  min-height: var(--checker-size, 24px);
+  max-width: none;
+  max-height: none;
+}
+.gameRoomTray :global(.bear-off-piece) { max-width: 100%; }
+
+.gameRoomBar :global(.bar-hitbox) { overflow: visible; }
+.gameRoomTray :global(.bear-off-piece) { height: 4px !important; flex-shrink: 1; }
+
+.gameRoomDice {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  z-index: 999;
+  display: flex;
+  gap: 10px;
+  pointer-events: none;
+}
+.gameRoomDie {
+  width: 36px;
+  height: 36px;
+  border-radius: 7px;
+  background: #fcfaf5;
+  border: 1px solid #d8d3c7;
+  box-shadow: 0 3px 5px #103f4a12;
+  padding: 7px;
+  gap: 3px;
+  transform: rotate(-7deg);
+}
+.gameRoomDie:nth-child(2) { transform: rotate(9deg); }
+.gameRoomMoveControls {
+  position: absolute;
+  inset: 0 var(--room-board-inset);
+  z-index: 1100;
+  display: grid;
+  grid-template-columns: 6fr .62fr 6fr;
+  align-items: center;
+  justify-items: center;
+  pointer-events: none;
+}
+.gameRoomMoveControls > :last-child { grid-column: 3; }
+@media (max-width: 700px) and (orientation: portrait) {
+  .gameRoomDice { gap: 7px; }
+  .gameRoomDie { width: 28px; height: 28px; padding: 5px; gap: 2px; }
+  .gameRoomMoveControls > button { padding-inline: 10px; font-size: 10px; }
+}
+@media (orientation: landscape) and (max-height: 650px) {
+  .gameRoomDice { gap: calc(10px * var(--game-room-scale, 1)); }
+  .gameRoomDie {
+    width: calc(27px * var(--game-room-scale, 1));
+    height: calc(27px * var(--game-room-scale, 1));
+    padding: calc(5px * var(--game-room-scale, 1));
+    gap: calc(2px * var(--game-room-scale, 1));
+  }
+  /* Override the global 44px touch height in the narrow center lane. */
+  .gameRoomFrame .gameRoomMoveControls > button {
+    min-height: clamp(24px, calc(28px * var(--game-room-scale, 1)), 32px);
+    min-width: 44px;
+    padding: calc(5px * var(--game-room-scale, 1)) calc(10px * var(--game-room-scale, 1));
+    border-radius: 5px;
+    font-size: clamp(9px, calc(10px * var(--game-room-scale, 1)), 11px);
+    line-height: 14px;
+    white-space: nowrap;
+    touch-action: manipulation;
+  }
+}
+@media (orientation: landscape) and (max-height: 380px) {
+  .gameRoomFrame .gameRoomMoveControls > button {
+    min-height: 24px;
+    padding: 4px 8px;
+    font-size: 9px;
+  }
+}

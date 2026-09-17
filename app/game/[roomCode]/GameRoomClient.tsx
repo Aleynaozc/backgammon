@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { GameViewport, OrientationOverlay } from '@/components/game/GameViewport';
+import { GameViewport } from '@/components/game/GameViewport';
 import { playFeedback, setFeedbackEnabled } from '@/lib/game/feedback';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -21,7 +21,7 @@ import {
   devAutoPlayOpponentStepAction,
 } from '@/app/actions/game';
 import { createClient } from '@/lib/supabase/client';
-import { ArrowLeft, ArrowUpRight, Check, LogOut, Volume2, VolumeX, Waves, Wrench, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Check, Heart, LogOut, Volume2, VolumeX, Waves, Wrench, X } from 'lucide-react';
 
 interface GameRoomClientProps {
   roomCode: string;
@@ -55,7 +55,7 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
   const submittingMovesRef = React.useRef(false);
   const rollingDiceRef = React.useRef(false);
   const devAutoOpponentRef = React.useRef(false);
-  
+
   const supabase = React.useMemo(() => createClient(), []);
 
   const setupRealtime = React.useCallback((gameId: string) => {
@@ -82,7 +82,7 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
     };
 
     const channel = supabase.channel(`game:${gameId}`);
-    
+
     channel.on(
       'postgres_changes',
       {
@@ -149,7 +149,7 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
   const handleJoin = React.useCallback(async (name: string, pId?: string) => {
     setLoading(true);
     const actualId = pId || crypto.randomUUID();
-    
+
     if (!pId) {
       localStorage.setItem('bg_playerId', actualId);
       localStorage.setItem('bg_nickname', name);
@@ -173,33 +173,13 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
       });
       setJoined(true);
       setLoading(false);
-      
+
       // Initialize Realtime subscription
       if (result.gameId) {
         setupRealtime(result.gameId);
       }
 
-      const joinedState = result.gameState as unknown as GameState;
-      const bothPlayersJoined = Boolean(result.player1_name && result.player2_name);
-      if (
-        bothPlayersJoined &&
-        joinedState.status === 'PLAYING' &&
-        joinedState.dice.length === 0 &&
-        joinedState.currentPlayer === result.assignedPlayer
-      ) {
-        rollingDiceRef.current = true;
-        void rollDiceAction(roomCode, actualId)
-          .then((rollResult) => {
-            if (rollResult.gameState) {
-              setGameState(rollResult.gameState as unknown as GameState);
-            }
-          })
-          .catch(() => setConnected(false))
-          .finally(() => {
-            rollingDiceRef.current = false;
-          });
-      }
-      
+
     } catch (e) {
       console.error("GameRoomClient joinGame error:", e);
       setError('Connection error: could not reach the server.');
@@ -211,7 +191,7 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
     const initializeRoom = async () => {
       const storedId = localStorage.getItem('bg_playerId');
       const storedName = localStorage.getItem('bg_nickname');
-      
+
       if (storedId && storedName) {
         setPlayerId(storedId);
         setNickname(storedName);
@@ -427,27 +407,49 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
           />
         )}
         <div className="space-y-6 rounded-2xl border border-[var(--ocean)]/30 bg-[var(--cream)] p-8 text-[var(--navy)] shadow-2xl shadow-[var(--ocean)]/25">
-        {isExistingRoom ? (
-          <>
-            {!isJoiningAsOtherPlayer ? (
-              <>
-                <h2 className="pr-6 text-center text-2xl font-bold uppercase text-[var(--navy)]">HECTOR, IS THAT YOU?</h2>
-                <button
-                  onClick={() => handleJoin('Hector')}
-                  className="w-full rounded-xl bg-[var(--coral)] py-3 font-bold uppercase text-white"
-                >
-                  YES
-                </button>
-                <button
-                  onClick={() => setIsJoiningAsOtherPlayer(true)}
-                  className="w-full text-sm font-semibold uppercase tracking-wide text-[var(--ocean)]"
-                >
-                  NO, I&apos;M THE OTHER PLAYER
-                </button>
-              </>
-            ) : (
-              <>
-                <h2 className="text-center text-2xl font-bold uppercase text-[var(--navy)]">JOIN GAME</h2>
+          {isExistingRoom ? (
+            <>
+              {!isJoiningAsOtherPlayer ? (
+                <>
+                  <h2 className="pr-6 text-center text-2xl font-bold uppercase text-[var(--navy)]">HECTOR, IS THAT YOU?</h2>
+                  <button
+                    onClick={() => handleJoin('Hector')}
+                    className="w-full rounded-xl bg-[var(--coral)] py-3 font-bold uppercase text-white"
+                  >
+                    YES
+                  </button>
+                  <button
+                    onClick={() => setIsJoiningAsOtherPlayer(true)}
+                    className="w-full text-sm font-semibold uppercase tracking-wide text-[var(--ocean)]"
+                  >
+                    NO, I&apos;M THE OTHER PLAYER
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-center text-2xl font-bold uppercase text-[var(--navy)]">JOIN GAME</h2>
+                  <input
+                    type="text"
+                    placeholder="Your name"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    className="w-full rounded-xl border border-[var(--ocean)]/40 bg-white/70 px-4 py-3 text-lg text-[var(--navy)] placeholder:text-[var(--ocean)]/60 focus:outline-none focus:ring-2 focus:ring-[var(--teal)]"
+                    maxLength={12}
+                  />
+                  <button
+                    onClick={() => handleJoin(nickname)}
+                    disabled={!nickname.trim()}
+                    className="w-full rounded-xl bg-[var(--coral)] py-3 font-bold uppercase text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    JOIN
+                  </button>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <h2 className="text-center text-2xl font-bold text-[var(--navy)]">JOIN GAME</h2>
+              <div className="space-y-4">
                 <input
                   type="text"
                   placeholder="Your name"
@@ -459,35 +461,13 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
                 <button
                   onClick={() => handleJoin(nickname)}
                   disabled={!nickname.trim()}
-                  className="w-full rounded-xl bg-[var(--coral)] py-3 font-bold uppercase text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full rounded-xl bg-[var(--coral)] py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   JOIN
                 </button>
-              </>
-            )}
-          </>
-        ) : (
-          <>
-            <h2 className="text-center text-2xl font-bold text-[var(--navy)]">JOIN GAME</h2>
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Your name"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                className="w-full rounded-xl border border-[var(--ocean)]/40 bg-white/70 px-4 py-3 text-lg text-[var(--navy)] placeholder:text-[var(--ocean)]/60 focus:outline-none focus:ring-2 focus:ring-[var(--teal)]"
-                maxLength={12}
-              />
-              <button
-                onClick={() => handleJoin(nickname)}
-                disabled={!nickname.trim()}
-                className="w-full rounded-xl bg-[var(--coral)] py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                JOIN
-              </button>
-            </div>
-          </>
-        )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     );
@@ -506,8 +486,7 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
 
   return (
     <div className="game-room flex h-full w-full max-w-[1400px] flex-col gap-2 p-1 sm:gap-3 sm:p-4">
-      
-      <OrientationOverlay />
+
       {!connected && <div role="status" className="connection-notice">Connection lost. Reconnecting...</div>}
       {gameState.lastPass && gameState.turnNumber <= gameState.lastPass.turnNumber + 1 && <div role="status" className="pass-notice">{playersInfo[gameState.lastPass.player]}: Pass / No legal moves</div>}
       <header className="game-topbar">
@@ -533,6 +512,14 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
         </div>
       </header>
 
+      <div className="game-table-heading">
+        <div>
+          <p className="game-table-eyebrow">GOOD TEAM. A LITTLE COMPETITION.</p>
+          <h1>Make time for a good game.</h1>
+        </div>
+        <span className="game-table-label">TURKISH X SPANISH <b>01</b></span>
+      </div>
+
       <div className="game-player-row">
         <div className="game-player">
           <span className="game-player-dot game-ivory-dot" />
@@ -549,7 +536,7 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
       </div>
 
       <GameViewport>
-        <BackgammonBoard 
+        <BackgammonBoard
           gameState={gameState}
           onConfirmMoves={handleConfirmMoves}
           onPendingMovesChange={handlePendingMovesChange}
@@ -640,20 +627,19 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
       </GameViewport>
 
       {/* Bottom Bar / You */}
-      <div className="flex items-center justify-between">
-        <div className="flex-1 max-w-[200px] sm:max-w-xs">
-          <PlayerPanel 
-            player={viewerPlayer === 'spectator' ? 'player1' : viewerPlayer} 
+      <div className={`game-summary flex items-center justify-between ${gameState.status === 'FINISHED' ? 'game-summary-finished' : ''}`}>
+        <div className="game-summary-player flex-1 max-w-[200px] sm:max-w-xs">
+          <PlayerPanel
+            player={viewerPlayer === 'spectator' ? 'player1' : viewerPlayer}
             playerName={viewerPlayer === 'spectator' ? playersInfo.player1 : (viewerPlayer === 'player1' ? playersInfo.player1 : playersInfo.player2)}
             gameState={gameState}
             isOnline={connected}
             isViewer={viewerPlayer !== 'spectator'}
-            onRollDice={handleRollDice}
             showActions={true}
             showDice={false}
           />
         </div>
-        
+
         {/* Game Status */}
         {gameState.status === 'FINISHED' && (
           <div className="text-center text-xl font-bold uppercase text-[var(--coral)]">
@@ -672,12 +658,18 @@ export function GameRoomClient({ roomCode }: GameRoomClientProps) {
             <button autoFocus type="button" className="game-invite-close" aria-label="Close invitation" onClick={() => setInviteOpen(false)}>
               <X size={20} />
             </button>
-            <p className="game-invite-eyebrow">THERE&apos;S ROOM FOR TWO</p>
-            <h2 id="game-invite-title">Better with company.</h2>
-            <p>Copy this room link and send it to a friend. They&apos;ll join this table as player two and can start playing with you.</p>
+            <p className="game-invite-eyebrow whitespace-nowrap">
+  OUR LITTLE BACKGAMMON ROOM
+  <Heart
+    size={10}
+    className="inline-block ml-1 align-middle"
+  />
+</p>
+            <h2 id="game-invite-title">Reserved for two. </h2>
+            <p>Invite your favorite person, take your place at the table, and let the battle begin. </p>
             <button type="button" className="game-invite-copy" onClick={() => void copyInviteLink()}>
               {inviteCopied ? <Check size={16} /> : <ArrowUpRight size={16} />}
-              {inviteCopied ? 'Invite link copied' : 'Copy invite link'}
+              {inviteCopied ? 'Invite link copied' : <> <span className="inline-flex items-center gap-1 whitespace-nowrap"><span>Join me, Mi Amor</span><Heart size={10} /></span></>}
             </button>
             {inviteCopyError && <p className="game-invite-error" role="status">Copy the address from your browser to share this game.</p>}
           </section>
